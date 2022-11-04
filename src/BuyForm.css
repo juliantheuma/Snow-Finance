@@ -1,0 +1,14 @@
+.container {
+  padding: 10px;
+  background-color: aqua;
+  width: 600px;
+}
+
+.flex {
+  display: flex;
+  justify-content: center;
+}
+
+.top-button {
+  width: 50%;
+}

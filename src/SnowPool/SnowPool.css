@@ -1,0 +1,45 @@
+.vault-container svg {
+  width: 100%;
+  transform: scale(1.5);
+}
+
+.left-container {
+  width: 50vw;
+}
+
+.right-container {
+  display: flex;
+  align-items: center;
+  height: 85vh;
+}
+
+.buttons {
+  display: flex;
+}
+
+.balances-container {
+  transform: scale(1.2);
+  /* border: 1px solid lightgray; */
+  border-radius: 8px;
+  width: 50%;
+  padding-left: 3.5em;
+}
+.balances-container h1 {
+  font-size: larger;
+  font-weight: bolder;
+}
+
+.balances-container h4 {
+  font-weight: bold;
+}
+
+.balances-container h5 {
+  color: gray;
+}
+
+.pie-chart-container {
+  width: 25vw;
+  /* border: 1px solid lightgray; */
+  border-radius: 8px;
+  padding: 2em;
+}

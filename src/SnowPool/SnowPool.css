@@ -4,13 +4,13 @@
 }
 
 .left-container {
-  width: 50vw;
+  width: 50%;
 }
 
 .right-container {
   display: flex;
-  align-items: center;
-  height: 85vh;
+  align-items: end;
+  height: 100%;
 }
 
 .buttons {
@@ -37,9 +37,25 @@
   color: gray;
 }
 
-.pie-chart-container {
-  width: 25vw;
-  /* border: 1px solid lightgray; */
-  border-radius: 8px;
-  padding: 2em;
+
+
+.card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: white;
+  color: black;
+  border: 1px solid lightgray;
+  box-shadow: rgba(3, 8, 20, 0.1) 0px 0.15rem 0.5rem,
+    rgba(2, 8, 20, 0.1) 0px 0.075rem 0.175rem;
+  height: 100%;
+  width: 100%;
+  border-radius: 4px;
+  transition: all 500ms;
+  overflow: hidden;
+
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }

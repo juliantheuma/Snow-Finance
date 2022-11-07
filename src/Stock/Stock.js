@@ -20,6 +20,11 @@ import { tradingPlatformAddress } from "../ContractsAddresses";
 import { getMaticPrice } from "../firebase";
 import handshake from "./handshake.jpg";
 import { parse } from "url";
+import Lottie from "react-lottie";
+import ContractSign from "../Animations/ContractSign";
+import Signature from "../Animations/Signature";
+import Success from "../Animations/Success";
+import LoadingAnimation from "../Animations/LoadingAnimation";
 
 function Stock() {
   const { ticker } = useParams();
@@ -42,98 +47,98 @@ function Stock() {
 
     return <h4>Hello</h4>;
   }
+  async function loadData() {
+    let accounts = await web3Context.web3.eth.getAccounts();
+    console.log(accounts);
+    setWallet(accounts[0]);
 
+    let tradingContract = new web3Context.web3.eth.Contract(
+      tradingPlatformABI,
+      tradingPlatformAddress
+    );
+
+    tradingContract.methods
+      .getTraderOrders(accounts[0])
+      .call()
+      .then(async (orders) => {
+        console.log(orders);
+
+        let ordersDetails = [];
+        let index = 0;
+
+        let stockPriceInMatic = await getStockData("MATIC");
+        let maticPrice = await getMaticPrice();
+
+        await getDetails();
+        console.log(ordersDetails);
+        setOpenTrades(ordersDetails);
+
+        async function getDetails() {
+          if (index !== orders.length) {
+            console.log(orders.length);
+            console.log(index);
+            let details = await tradingContract.methods
+              .orderDetails(orders[index])
+              .call();
+
+            console.log(details);
+
+            if (details.settled === false && details.ticker === ticker) {
+              let parsed = {};
+              parsed.amount = details.quantity;
+              parsed.price = details.price;
+              parsed.type = details.longOrShort;
+              parsed.investment = details.investment;
+              parsed.id = orders[index];
+
+              console.log(parsed);
+
+              let profitAmount =
+                web3Context.web3.utils.fromWei(parsed.amount) *
+                  stockPriceInMatic -
+                web3Context.web3.utils.fromWei(parsed.investment);
+
+              profitAmount = profitAmount * maticPrice;
+
+              console.log(web3Context.web3.utils.fromWei(parsed.price));
+
+              let profitType = profitAmount >= 0 ? "PROFIT" : "LOSS";
+              let profitPercentage =
+                (parseFloat(profitAmount) * 100) /
+                web3Context.web3.utils.fromWei(parsed.investment);
+
+              console.log("$" + profitAmount);
+              console.log(web3Context.web3.utils.fromWei(parsed.investment));
+
+              if (
+                parsed.type === "SHORT" &&
+                web3Context.web3.utils.fromWei(parsed.price) <
+                  maticPrice * stockPriceInMatic
+              ) {
+                profitAmount *= -1;
+                profitPercentage *= -1;
+                profitType = "LOSS";
+              }
+
+              parsed.profitAndLoss = {
+                type: profitType,
+                amount: profitAmount,
+                percentage: profitPercentage,
+              };
+
+              ordersDetails.push(parsed);
+            }
+            index++;
+            return getDetails();
+          }
+        }
+      });
+
+    setDataLoaded(true);
+  }
   useEffect(() => {
     loadData();
-    async function loadData() {
-      let accounts = await web3Context.web3.eth.getAccounts();
-      console.log(accounts);
-      setWallet(accounts[0]);
-
-      let tradingContract = new web3Context.web3.eth.Contract(
-        tradingPlatformABI,
-        tradingPlatformAddress
-      );
-
-      tradingContract.methods
-        .getTraderOrders(accounts[0])
-        .call()
-        .then(async (orders) => {
-          console.log(orders);
-
-          let ordersDetails = [];
-          let index = 0;
-
-          let stockPriceInMatic = await getStockData("MATIC");
-          let maticPrice = await getMaticPrice();
-
-          await getDetails();
-          console.log(ordersDetails);
-          setOpenTrades(ordersDetails);
-
-          async function getDetails() {
-            if (index !== orders.length) {
-              console.log(orders.length);
-              console.log(index);
-              let details = await tradingContract.methods
-                .orderDetails(orders[index])
-                .call();
-
-              console.log(details);
-
-              if (details.settled === false && details.ticker === ticker) {
-                let parsed = {};
-                parsed.amount = details.quantity;
-                parsed.price = details.price;
-                parsed.type = details.longOrShort;
-                parsed.investment = details.investment;
-                parsed.id = orders[index];
-
-                console.log(parsed);
-
-                let profitAmount =
-                  web3Context.web3.utils.fromWei(parsed.amount) *
-                    stockPriceInMatic -
-                  web3Context.web3.utils.fromWei(parsed.investment);
-
-                profitAmount = profitAmount * maticPrice;
-
-                console.log(web3Context.web3.utils.fromWei(parsed.price));
-
-                let profitType = profitAmount >= 0 ? "PROFIT" : "LOSS";
-                let profitPercentage =
-                  (parseFloat(profitAmount) * 100) /
-                  web3Context.web3.utils.fromWei(parsed.investment);
-
-                console.log("$" + profitAmount);
-                console.log(web3Context.web3.utils.fromWei(parsed.investment));
-
-                if (
-                  parsed.type === "SHORT" &&
-                  web3Context.web3.utils.fromWei(parsed.price) <
-                    maticPrice * stockPriceInMatic
-                ) {
-                  profitAmount *= -1;
-                  profitPercentage *= -1;
-                  profitType = "LOSS";
-                }
-
-                parsed.profitAndLoss = {
-                  type: profitType,
-                  amount: profitAmount,
-                  percentage: profitPercentage,
-                };
-
-                ordersDetails.push(parsed);
-              }
-              index++;
-              return getDetails();
-            }
-          }
-        });
-
-      setDataLoaded(true);
-    }
+    
   }, [web3Context]);
 
   async function handleOrder() {
@@ -212,6 +217,7 @@ function Stock() {
         console.log("receipt");
         console.log(receipt);
         setOrderState("confirmed");
+        loadData();
       })
       .on("confirmation", (receipt) => {
         console.log("Confirmation");
@@ -257,7 +263,7 @@ function Stock() {
   }
   useEffect(() => {
     getStockData();
-  }, []);
+  }, [ticker]);
 
   useEffect(() => {
     console.log(orderUnit);
@@ -340,34 +346,34 @@ function Stock() {
           </Tab>
         </TabList>
       </div>
-      <div style={{ width: "100%" }} id="md-view">
-        <div className="basic-grid" style={{ width: "100%" }}>
-          <div className="card price">
-            {stockInfo && stockInfo.name} | {ticker}
-            <div className="details">
-              <div className="card">
-                <h4 style={{ color: "blue" }}>Today's Change</h4>
-                <h6>
+      <div style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center", height: "100vh", marginTop:"1em" }} id="md-view">
+        <div className="basic-grid" style={{ width: "90%" }}>
+          <div className="card price" >
+            <b>{stockInfo && stockInfo.name} | {ticker}</b>
+            <div className="details" style={{marginTop: "1em"}}>
+              <div className="card" style={{backgroundColor: "#a9c9e6", textAlign: "center", marginRight: "0.5em"}}>
+                <h4 style={{ color: "#15538a", fontWeight: "bold", textAlign: "center" }}>Today's Change</h4>
+                <h6 style={{color: "white", fontWeight: "500", textAlign: "center"}}>
                   {stockInfo && stockInfo.ExtendedMktQuote.change}
                   {"  ("}
                   {stockInfo && stockInfo.ExtendedMktQuote.change_pct})
                 </h6>
               </div>
 
-              <div className="card">
-                <h4 style={{ color: "blue" }}>52 Week Range</h4>
-                <h6>
-                  {stockInfo && stockInfo.yrloprice} -{" "}
-                  {stockInfo && stockInfo.yrhiprice}
+              <div className="card" style={{backgroundColor: "#a9c9e6", textAlign: "center", marginRight: "0.5em"}}>
+                <h4 style={{ color: "#15538a", fontWeight: "bold", textAlign: "center" }}>52 Week Range</h4>
+                <h6 style={{color: "white", fontWeight: "500", textAlign: "center"}}>
+                  ${stockInfo && stockInfo.yrloprice} -{" "}
+                  ${stockInfo && stockInfo.yrhiprice}
                 </h6>
               </div>
-              <div className="card">
-                <h4 style={{ color: "blue" }}>Market Cap</h4>
-                <h6>{stockInfo && stockInfo.mktcapView}</h6>
+              <div className="card"  style={{backgroundColor: "#a9c9e6", textAlign: "center", marginRight: "0.5em"}}>
+                <h4 style={{ color: "#15538a", fontWeight: "bold", textAlign: "center"  }}>Market Cap</h4>
+                <h6 style={{color: "white", fontWeight: "500", textAlign: "center"}}>{stockInfo && stockInfo.mktcapView}</h6>
               </div>
-              <div className="card">
-                <h6 style={{ color: "blue" }}>Exchange</h6>
-                <h5>{stockInfo && stockInfo.exchange}</h5>
+              <div className="card" style={{backgroundColor: "#a9c9e6", textAlign: "center"}}>
+                <h6 style={{ color: "#15538a", fontWeight: "bold", textAlign: "center"  }}>Exchange</h6>
+                <h5 style={{color: "white", fontWeight: "500", textAlign: "center"}}>{stockInfo && stockInfo.exchange}</h5>
               </div>
             </div>
           </div>
@@ -382,7 +388,7 @@ function Stock() {
             </div>
           </div>
           <div className="card order">
-            Order {stockInfo && stockInfo.name} Stocks
+            <b>Order {stockInfo && stockInfo.name} Stocks</b>
             <div
               style={{
                 display: "flex",
@@ -391,12 +397,14 @@ function Stock() {
                 marginTop: "1em",
               }}
             >
-              <div style={{ marginRight: "0.2em", width: "200px" }}>
+              <div style={{ marginRight: "0.2em", width: "100px" }}>
                 <Input
                   label="Amount"
                   onChange={(val) => setOrderAmount(val.target.value)}
                 />
               </div>
+              <div style={{width: "180px"}}>
+
               <Select
                 traditionalHTML5
                 width="100px"
@@ -415,9 +423,11 @@ function Stock() {
                 onChangeTraditional={(val) => {
                   setOrderUnit(val.target.options[val.target.selectedIndex].id);
                 }}
-              />
+                />
+                </div>
             </div>
             <div style={{ display: "flex", justifyContent: "center" }}>
+              <div title="Profit from the stock going up in price">
               <Button
                 text="LONG 📈"
                 theme="primary"
@@ -426,6 +436,8 @@ function Stock() {
                   setOrderType("LONG");
                 }}
               />
+              </div>
+              <div title="Profit from the stock going down in price">
               <Button
                 text="SHORT 📉"
                 theme="custom"
@@ -439,10 +451,11 @@ function Stock() {
                   setOrderType("SHORT");
                 }}
               />
+              </div>
             </div>
           </div>
           <div className="card trades">
-            Your Active Trades
+            <b>Your Active {stockInfo && stockInfo.name} Trades</b>
             <div>
               {openTrades.length > 0 &&
                 openTrades.map((openTrade) => (
@@ -503,376 +516,18 @@ function Stock() {
           </div>
         </div>
       </div>
-      <div style={{ width: "100%", height: "100%" }} id="xl-view">
-        <div className="basic-grid" style={{ width: "100%" }}>
-          <div className="card price">
-            {stockInfo && stockInfo.name} | {ticker}
-            <div className="details">
-              <div className="card">
-                <h4 style={{ color: "blue" }}>Today's Change</h4>
-                <h6>
-                  {stockInfo && stockInfo.ExtendedMktQuote.change}
-                  {"  ("}
-                  {stockInfo && stockInfo.ExtendedMktQuote.change_pct})
-                </h6>
-              </div>
-
-              <div className="card">
-                <h4 style={{ color: "blue" }}>52 Week Range</h4>
-                <h6>
-                  {stockInfo && stockInfo.yrloprice} -{" "}
-                  {stockInfo && stockInfo.yrhiprice}
-                </h6>
-              </div>
-              <div className="card">
-                <h4 style={{ color: "blue" }}>Market Cap</h4>
-                <h6>{stockInfo && stockInfo.mktcapView}</h6>
-              </div>
-              <div className="card">
-                <h6 style={{ color: "blue" }}>Exchange</h6>
-                <h5>{stockInfo && stockInfo.exchange}</h5>
-              </div>
-            </div>
-          </div>
-          <div className="card graph">
-            <div style={{ width: "100%", height: "100%" }}>
-              <TradingViewWidget
-                symbol={"NASDAQ:" + ticker}
-                theme={Themes.LIGHT}
-                BarStyles="3"
-                width="100%"
-              />
-            </div>
-          </div>
-
-          <div className="card open-trades">
-            <div style={{ marginBottom: "1em" }}>Your Open Trades</div>
-
-            <div
-              style={{
-                display: "flex",
-                width: "100%",
-                justifyContent: "space-around",
-                marginBottom: "0.3em",
-              }}
-            >
-              2 {ticker}{" "}
-              <Tag
-                color="green"
-                onCancelClick={function noRefCheck() {}}
-                text="LONG"
-                tone="dark"
-                fontSize="10px"
-              />
-              <span style={{ color: "green" }}>+$250.50 (2.37%) </span>
-              <Button text="close" theme="secondary" />
-            </div>
-            <div
-              style={{
-                display: "flex",
-                width: "100%",
-                justifyContent: "space-around",
-              }}
-            >
-              <div style={{ mariginRight: "0.5em" }}>2 {ticker} </div>
-              <div>
-                <Tag
-                  color="red"
-                  onCancelClick={function noRefCheck() {}}
-                  text="SHORT"
-                  tone="dark"
-                  fontSize="10px"
-                />
-              </div>
-              <div>
-                <span style={{ color: "red" }}>-$250.50 (2.37%) </span>
-              </div>
-              <div>
-                <Button text="close" theme="secondary" />
-              </div>
-            </div>
-            {/* <TabList
-              defaultActiveKey={1}
-              onChange={function noRefCheck() {}}
-              tabStyle="bar"
-            >
-              <Tab
-                tabKey={1}
-                tabName={
-                  <div style={{ display: "flex" }}>
-                    <span style={{ paddingLeft: "4px" }}>Open Positions </span>
-                  </div>
-                }
-              >
-                
-                <div
-                  style={{
-                    display: "flex",
-                    paddingTop: "1em",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    width: "100%",
-                  }}
-                >
-                  <span>2 {ticker} </span>
-                  <Tag
-                    color="red"
-                    onCancelClick={function noRefCheck() {}}
-                    text="SHORT"
-                    tone="dark"
-                  />
-                  <span style={{ color: "red" }}>-$250.50 (2.37%) </span>
-                  <Button text="close" theme="secondary" />
-                </div>
-              </Tab>
-              <Tab
-                tabKey={2}
-                tabName={
-                  <div style={{ display: "flex" }}>
-                    <span style={{ paddingLeft: "4px" }}>Order </span>
-                  </div>
-                }
-              >
-                <div
-                  style={{
-                    display: "flex",
-                    width: "100%",
-                    justifyItems: "center",
-                  }}
-                >
-                  <div style={{ width: "100px" }}>
-                    <Input />
-                  </div>
-                  <Select
-                    width="150px"
-                    options={[
-                      {
-                        label: "$",
-                        id: "USD",
-                      },
-                      {
-                        label: ticker,
-                        id: ticker,
-                      },
-                    ]}
-                  />
-                </div>
-              </Tab>
-            </TabList> */}
-          </div>
-          <div className="card order">
-            Order {ticker}
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                marginBottom: "1em",
-                marginTop: "1em",
-              }}
-            >
-              <div style={{ marginRight: "0.2em", width: "200px" }}>
-                <Input label="Amount" />
-              </div>
-              <Select
-                traditionalHTML5
-                width="100px"
-                options={[
-                  {
-                    id: ticker,
-                    label: ticker,
-                  },
-                  {
-                    id: "USD",
-                    label: "USD",
-                  },
-                ]}
-              />
-            </div>
-            <div style={{ display: "flex" }}>
-              <Button text="LONG 📈" theme="primary" />
-              <Button
-                text="SHORT 📉"
-                theme="custom"
-                customize={{
-                  backgroundColor: "#e84118",
-                  onHover: "lighten",
-                  textColor: "#FFFFFF",
-                }}
-              />
-            </div>
-          </div>
-          <div className="card recent-trades">
-            <div style={{ marginBottom: "1em" }}>
-              Recent {stockInfo && stockInfo.name} Trades
-            </div>
-            <div style={{ height: "400px", width: "350px" }}>
-              <Table
-                columnsConfig="1fr 1fr 1fr"
-                data={[
-                  [
-                    <Avatar isRounded size={36} theme="image" />,
-                    <Tag color="blue" text="Nft Collection" />,
-                    "0x18...130e",
-                  ],
-                  [
-                    <Avatar fontSize={36} isRounded theme="image" />,
-                    <Tag color="red" text="Lazy Nft" />,
-                    "0x18...130e",
-                  ],
-                  [
-                    <Avatar fontSize={36} isRounded theme="image" />,
-                    <Tag color="yellow" text="Pack" />,
-                    "0x18...130e",
-                  ],
-                  [
-                    <Avatar fontSize={36} isRounded theme="image" />,
-                    <Tag color="red" text="Nft Marketplace" />,
-                    "0x18...130e",
-                  ],
-                  [
-                    <Avatar fontSize={36} isRounded theme="image" />,
-                    <Tag color="purple" text="Bundle" />,
-                    "0x18...130e",
-                  ],
-                  [
-                    <Avatar fontSize={36} isRounded theme="image" />,
-                    <Tag color="green" text="Token" />,
-                    "0x18...130e",
-                  ],
-                  [
-                    <Avatar fontSize={36} isRounded theme="image" />,
-                    <Tag color="blue" text="Nft Collection" />,
-                    "0x18...130e",
-                  ],
-                  [
-                    <Avatar fontSize={36} isRounded theme="image" />,
-                    <Tag color="red" text="Bundle" />,
-                    "0x18...130e",
-                  ],
-                  [
-                    <Avatar fontSize={36} isRounded theme="image" />,
-                    <Tag color="green" text="Token" />,
-                    "0x18...130e",
-                  ],
-                  [
-                    <Avatar fontSize={36} isRounded theme="image" />,
-                    <Tag color="blue" text="Nft Collection" />,
-                    "0x18...130e",
-                  ],
-                  [
-                    <Avatar fontSize={36} isRounded theme="image" />,
-                    <Tag color="red" text="Lazy Nft" />,
-                    "0x18...130e",
-                  ],
-                  [
-                    <Avatar fontSize={36} isRounded theme="image" />,
-                    <Tag color="yellow" text="Pack" />,
-                    "0x18...130e",
-                  ],
-                ]}
-                header={["", <span>Type</span>, <span>Amount</span>]}
-                isColumnSortable={[false, true, true]}
-                maxPages={3}
-                onPageNumberChanged={function noRefCheck() {}}
-                onRowClick={function noRefCheck() {}}
-                pageSize={5}
-                alignCellItems="center"
-                justifyCellItems="center"
-                isScrollableOnOverflow={true}
-              />
-            </div>
-          </div>
-          <div className="card trade-history">
-            Your Trade History
-            <div style={{ height: "250px", width: "100%", marginTop: "1em" }}>
-              <Table
-                columnsConfig="1fr 1fr 1fr"
-                data={[
-                  [
-                    <Avatar isRounded size={36} theme="image" />,
-                    <Tag color="green" text="Long" />,
-                    "15 AAPL ($12,500)",
-                  ],
-                  [
-                    <Avatar fontSize={36} isRounded theme="image" />,
-                    <Tag color="red" text="Short" />,
-                    "15 AAPL ($12,500)",
-                  ],
-                  [
-                    <Avatar fontSize={36} isRounded theme="image" />,
-                    <Tag color="yellow" text="Close" />,
-                    "15 AAPL ($12,500)",
-                  ],
-                  [
-                    <Avatar fontSize={36} isRounded theme="image" />,
-                    <Tag color="red" text="Nft Marketplace" />,
-                    "0x18...130e",
-                  ],
-                  [
-                    <Avatar fontSize={36} isRounded theme="image" />,
-                    <Tag color="purple" text="Bundle" />,
-                    "0x18...130e",
-                  ],
-                  [
-                    <Avatar fontSize={36} isRounded theme="image" />,
-                    <Tag color="green" text="Token" />,
-                    "0x18...130e",
-                  ],
-                  [
-                    <Avatar fontSize={36} isRounded theme="image" />,
-                    <Tag color="blue" text="Nft Collection" />,
-                    "0x18...130e",
-                  ],
-                  [
-                    <Avatar fontSize={36} isRounded theme="image" />,
-                    <Tag color="red" text="Bundle" />,
-                    "0x18...130e",
-                  ],
-                  [
-                    <Avatar fontSize={36} isRounded theme="image" />,
-                    <Tag color="green" text="Token" />,
-                    "0x18...130e",
-                  ],
-                  [
-                    <Avatar fontSize={36} isRounded theme="image" />,
-                    <Tag color="blue" text="Nft Collection" />,
-                    "0x18...130e",
-                  ],
-                  [
-                    <Avatar fontSize={36} isRounded theme="image" />,
-                    <Tag color="red" text="Lazy Nft" />,
-                    "0x18...130e",
-                  ],
-                  [
-                    <Avatar fontSize={36} isRounded theme="image" />,
-                    <Tag color="yellow" text="Pack" />,
-                    "0x18...130e",
-                  ],
-                ]}
-                header={["", <span>Type</span>, <span>Amount</span>]}
-                isColumnSortable={[false, true, true]}
-                maxPages={3}
-                onPageNumberChanged={function noRefCheck() {}}
-                onRowClick={function noRefCheck() {}}
-                pageSize={5}
-                alignCellItems="center"
-                justifyCellItems="center"
-                isScrollableOnOverflow={false}
-              />
-            </div>
-          </div>
-        </div>
-      </div>
+      
       <Modal
         isOpen={modalIsOpen}
         onClose={() => {
           setModalIsOpen(false);
           setOrderState("ordering");
+          loadData();
         }}
       >
         {orderState === "ordering" && (
           <div>
-            <h4>
+            <h4 style={{color: "#195289", fontSize: "1.5em", marginBottom: "0.75em"}}>
               <b>Are You Sure You Want To Place This Order?</b>
             </h4>
             <div
@@ -883,22 +538,22 @@ function Stock() {
                 marginBottom: "1em",
               }}
             >
-              <div style={{ display: "flex" }}>
+              <div style={{ display: "flex", color: "#5c86ac" }}>
                 <span>Type:</span>
-                <span style={{ marginLeft: "auto", color: "blue" }}>
-                  {orderType === "LONG" ? "LONG 📈" : "SHORT 📉"}
+                <span style={{ marginLeft: "auto", color: "#5c86ac" }}>
+                  {orderType === "LONG" ? "LONG" : "SHORT"}
                 </span>
               </div>
-              <div style={{ display: "flex" }}>
+              <div style={{ display: "flex", color: "#5c86ac" }}>
                 <span>{ticker} Price:</span>
-                <span style={{ marginLeft: "auto", color: "blue" }}>
+                <span style={{ marginLeft: "auto", color: "#5c86ac" }}>
                   ${stockInfo && stockInfo.ExtendedMktQuote.last}
                 </span>
               </div>
-              <div style={{ display: "flex" }}>
+              <div style={{ display: "flex", color: "#5c86ac" }}>
                 <span>Amount:</span>
                 {stockInfo && (
-                  <span style={{ marginLeft: "auto", color: "blue" }}>
+                  <span style={{ marginLeft: "auto", color: "#5c86ac" }}>
                     {orderUnit === ticker
                       ? orderAmount
                       : Math.round(
@@ -914,11 +569,12 @@ function Stock() {
                   borderTop: "0.5px solid gray",
                   marginTop: "1em",
                   paddingTop: "0.5em",
+                  color: "#5c86ac"
                 }}
               >
-                <span>Total Price:</span>
+                <span><b>Total Price:</b></span>
                 {stockInfo && (
-                  <span style={{ marginLeft: "auto", color: "blue" }}>
+                  <span style={{ marginLeft: "auto", color: "#5c86ac" }}>
                     <b>
                       $
                       {orderUnit === ticker
@@ -960,12 +616,12 @@ function Stock() {
               Amount: {web3Context.web3.utils.fromWei(closingTrade.amount)}{" "}
               {stockInfo && stockInfo.name}
             </h4>
-            <h4>
+            <h4 >
               Profit And Loss: ${closingTrade.profitAndLoss.amount} (
               {closingTrade.profitAndLoss.type === "PROFIT" ? "+" : "-"}
               {Math.round(closingTrade.profitAndLoss.percentage * 100) / 100}%)
             </h4>
-            <div style={{ display: "flex" }}>
+            <div style={{ display: "flex"}}>
               <Button
                 theme="primary"
                 text="Confirm"
@@ -980,22 +636,33 @@ function Stock() {
         )}
         {orderState === "sign" && (
           <>
+          <Signature />
             <h4>Please Sign the tx.</h4>
           </>
         )}
         {orderState === "pending" && (
           <>
-            <h4>Txn Pending...</h4>
+            <LoadingAnimation />
+            <h4>Your Order Is On Its Way!</h4>
           </>
         )}
         {orderState === "confirmed" && (
           <>
-            <img src={handshake}></img>
-            <h4>Txn Confirmed...</h4>
+          <Success />
+            <h4>Transaction Complete</h4>
+            <h4>{orderAmount + " " + stockInfo.name} shares have been added to your account</h4>
           </>
         )}
         {orderState === "failed" && <h4>Txn failed. Please try again</h4>}
       </Modal>
+      {/* {stockInfo && <div style={{border: "1px solid gray", width: "500px", borderRadius: "20px"}}>
+          <ContractSign />
+            <div style={{display: "flex", alignItems: "center", flexDirection: "column"}}>
+            <h4 style={{fontWeight: "bolder", fontSize: "1.7em"}}>Transaction Complete</h4>
+            <h4>{orderAmount + " " + stockInfo.name} shares have been added to your account</h4>
+            <button style={{marginTop: "1em",marginBottom: "1em", width: "95%", backgroundColor: "black", color: "white", borderRadius: "10px", height: "2.5em"}}>Nice!</button>
+            </div>
+          </div>} */}
     </>
   );
 }

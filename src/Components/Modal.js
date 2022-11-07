@@ -10,6 +10,7 @@ const MODAL_STYLES = {
   backgroundColor: "#FFF",
   padding: "50px",
   zIndex: 1000,
+  borderRadius: "30px"
 };
 
 const OVERLAY_STYLES = {

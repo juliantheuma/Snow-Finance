@@ -97,8 +97,8 @@ export async function deposit(amount) {
   const session = await createCheckoutSession(payments, {
     mode: "payment",
     price: price,
-    success_url: "http://localhost:3000/success",
-    cancel_url: "http://localhost:3000/cancel",
+    success_url: "https://fundamentals-8cb60.web.app/deposit/success",
+    cancel_url: "https://fundamentals-8cb60.web.app/deposit/cancel",
   });
 
   console.log(session);

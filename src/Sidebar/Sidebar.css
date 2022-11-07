@@ -1,8 +1,10 @@
 .Sidebar {
   position: fixed;
   height: 0.9vh;
-  width: 250px;
+  width: 260px;
   top: 47px;
+  background-color: white;
+  z-index: 9999;
 }
 
 .SidebarList {
@@ -36,5 +38,6 @@
 }
 
 .SidebarList #active {
-  background-color: #84add2;
+  background-color: #195289;
+  color: white
 }

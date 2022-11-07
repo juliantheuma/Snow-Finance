@@ -17,6 +17,10 @@ import {
   query,
 } from "firebase/firestore";
 import Modal from "../Components/Modal";
+import { useNavigate } from "react-router-dom";
+import VaultAnimation from "../Animations/VaultAnimation";
+import Success from "../Animations/Success";
+import vaultImg from "./vault.png"
 ChartJS.register(ArcElement, Tooltip, Legend);
 
 function SnowPool() {
@@ -36,6 +40,8 @@ function SnowPool() {
   const [unit, setUnit] = useState(null);
   const [pending, setPending] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
+
+  let navigate = useNavigate();
 
   async function loadData() {
     let accounts = await web3Context.web3.eth.getAccounts();
@@ -156,6 +162,7 @@ function SnowPool() {
         .then((response) => console.log(response));
       setPending(false);
       setConfirmed(true);
+      loadData();
     }
 
     if (type === "Withdraw") {
@@ -178,8 +185,26 @@ function SnowPool() {
                 web3Context.web3.utils.toWei(amount.toString(), "ether")
               )
               .send({ from: wallet })
+              .on("transactionHash", (hash) => {
+                console.log("Hash");
+                console.log(hash);
+                setPending(true)
+                setConfirmed(false)
+              })
+              .on("receipt", (receipt) => {
+                console.log("receipt");
+                console.log(receipt);
+                setPending(false)
+                setConfirmed(true)
+              })
+              .on("error", (error) => {
+                console.log("error");
+                console.log(error);
+              })
               .then((response) => {
                 console.log(response);
+                loadData();
+
               });
           } else {
             //If is not approved
@@ -201,8 +226,26 @@ function SnowPool() {
                     web3Context.web3.utils.toWei(amount.toString(), "ether")
                   )
                   .send({ from: wallet })
+                  .on("transactionHash", (hash) => {
+                    console.log("Hash");
+                    console.log(hash);
+                    setPending(true)
+                    setConfirmed(false)
+                  })
+                  .on("receipt", (receipt) => {
+                    console.log("receipt");
+                    console.log(receipt);
+                    setPending(false)
+                    setConfirmed(true)
+                  })
+                  .on("error", (error) => {
+                    console.log("error");
+                    console.log(error);
+                  })
                   .then((response) => {
                     console.log(response);
+                    loadData();
+
                   });
               });
           }
@@ -221,9 +264,9 @@ function SnowPool() {
     // }
   }
   return (
-    <div>
-      <div style={{ display: "flex" }}>
-        <div
+    <div style={{height: "100%"}}>
+      <div style={{ marginTop: "2em", height: "100%" }}>
+        {/* <div
           className="left-container"
           style={{
             display: "flex",
@@ -232,12 +275,17 @@ function SnowPool() {
             marginLeft: "5em",
           }}
         >
-          <div className="balances-container">
-            <h1>Your Balance</h1>
-            <h4>{snowBalance} SNOW</h4>
-            <h5>≈{snowBalanceMatic} MATIC</h5>
-            <h5>≈${snowBalanceUSD}</h5>
-            <div className="buttons mt-2">
+          <div style={{display: "flex", width: "100%"}}>
+          <div style={{backgroundColor: "#d9d9d940", paddingLeft: "1em", paddingRight: "1em", borderRadius: "21px", width: "100%"}}>
+            <h1 style={{color: "white",textEmphasis: "bold", marginTop: "1em", backgroundColor: "#15538a", borderRadius: "12px", textAlign: "center", fontSize: "16px", paddingTop: "0.5em", paddingBottom: "0.5em", paddingRight: "2em", paddingLeft: "2em"}}><b>Your Balance {(Math.floor(snowBalance * 100) / 100).toLocaleString("en-US")} SNOW</b></h1>
+            <div style={{display: "flex", justifyContent: "center", paddingTop: "0.5em", paddingBottom: "0.5em"}}>
+            <h5 style={{color: "#5c86ac", marginRight: "1.5em"}}><b>≈ ${Math.floor(snowBalanceUSD * 100) / 100}</b></h5>
+            <h5 style={{color: "#5c86ac"}}><b>≈ { Math.floor(snowBalanceMatic * 10000) / 10000} MATIC</b></h5>
+            </div>
+            
+          </div>
+          <div style={{ display: "flex", flexDirection:"column", justifyContent: "center", alignItems: "space-between"}}>
+            <div style={{marginBottom: "0.25em"}}>
               <Button
                 text="Withdraw"
                 theme="secondary"
@@ -245,7 +293,10 @@ function SnowPool() {
                   setIsOpen(true);
                   setType("Withdraw");
                 }}
-              />
+                size="large"
+                />
+                </div>
+                <div style={{width: "100%"}}>
               <Button
                 text="Deposit"
                 theme="secondary"
@@ -253,29 +304,92 @@ function SnowPool() {
                   setIsOpen(true);
                   setType("Deposit");
                 }}
-              />
+                size="large"
+                />
+                </div>
             </div>
-          </div>
+            </div>
           <div className="pie-chart-container">
-            <h4>Today's Profits: $750,000</h4>
-            <h4>Your Profits: $2,000</h4>
-            <h4>Funds In Contract: {fundsInContract} MATIC</h4>
-            <h4>SNOW/MATIC: {snowPerMatic}</h4>
-            <h4>MATIC/SNOW: {maticPerSnow}</h4>
-            <h4>SNOW Supply: {snowSupply}</h4>
+
+
+<div style={{display: "flex", marginTop: "3em", width: "100%"}}>
+
+              <div className="card" style={{backgroundColor: "#a9c9e6", textAlign: "center", marginTop: "0.5em", marginBottom: "0.5em", marginLeft: "1em", width: "50%", aspectRatio: "1 / 1", marginRight: "1em"}}>
+                <h6 style={{ color: "#15538a", fontWeight: "bold", textAlign: "center"  }}>Your Profit</h6>
+                <h5 style={{color: "white", fontWeight: "500", textAlign: "center"}}>$2,000</h5>
+              </div>
+              <div className="card" style={{backgroundColor: "#195289", textAlign: "center", marginTop: "0.5em", marginBottom: "0.5em", width: "50%", aspectRatio: "1 / 1"}}>
+                <h6 style={{ color: "white", fontWeight: "bold", textAlign: "center"  }}>Funds In Vault</h6>
+                <h5 style={{color: "#a9c9e6", fontWeight: "500", textAlign: "center"}}>{Math.floor(fundsInContract * 100) / 100} MATIC</h5>
+              </div>
+              </div>
+              <div style={{display: "flex"}}>
+
+              <div className="card" style={{backgroundColor: "#195289", textAlign: "center", marginTop: "0.5em", marginBottom: "0.5em",  marginLeft: "1em", width: "50%",aspectRatio: "1 / 1", marginRight: "1em"}}>
+                <h6 style={{ color: "white", fontWeight: "bold", textAlign: "center"  }}>SNOW/MATIC</h6>
+                <h5 style={{color: "#a9c9e6", fontWeight: "500", textAlign: "center"}}>{parseInt(snowPerMatic).toLocaleString("en-US")}</h5>
+              </div>
+              <div className="card" style={{backgroundColor: "#a9c9e6", textAlign: "center", marginTop: "0.5em", marginBottom: "0.5em", width: "50%", aspectRatio: "1 / 1"}}>
+                <h6 style={{ color: "#15538a", fontWeight: "bold", textAlign: "center"  }}>SNOW Supply</h6>
+                <h5 style={{color: "white", fontWeight: "500", textAlign: "center"}}>{Math.floor(snowSupply).toLocaleString("en-US")}</h5>
+              </div>
+              </div>
+
           </div>
+        </div> */}
+        <div style={{ width: "30%", marginLeft: "7.5%", marginBottom: "2em"}}>
+          <div style={{backgroundColor: "#d9d9d940", paddingLeft: "1em", paddingRight: "1em", borderRadius: "21px", width: "100%"}}>
+            <h1 style={{color: "white",textEmphasis: "bold", marginTop: "1em", backgroundColor: "#15538a", borderRadius: "12px", textAlign: "center", fontSize: "16px", paddingTop: "0.5em", paddingBottom: "0.5em", paddingRight: "2em", paddingLeft: "2em"}}><b>Your Balance {(Math.floor(snowBalance * 100) / 100).toLocaleString("en-US")} SNOW</b></h1>
+            <div style={{display: "flex", justifyContent: "center", paddingTop: "0.5em", paddingBottom: "0.5em"}}>
+            <h5 style={{color: "#5c86ac", marginRight: "1.5em"}}><b>≈ ${Math.floor(snowBalanceUSD * 100) / 100}</b></h5>
+            <h5 style={{color: "#5c86ac"}}><b>≈ { Math.floor(snowBalanceMatic * 10000) / 10000} MATIC</b></h5>
+            </div>
+            
+          </div>
+
         </div>
-        <div className="right-container">
-          <div className="vault-container">
-            <Vault />
+        
+        <div style={{display: "flex", width: "100%", justifyContent: "center"}} id="idk">
+          <div style={{display: "flex", width: "75%"}}>
+        <div style={{width: "50%"}}>
+
+        <div style={{display: "flex"}}>
+        <div className="card" style={{backgroundColor: "#a9c9e6", textAlign: "center", marginTop: "0.5em", marginBottom: "0.5em", marginLeft: "1em", width: "50%", aspectRatio: "1 / 1", marginRight: "1em"}}>
+                <h6 style={{ color: "#15538a", fontWeight: "bold", textAlign: "center"  }}>Your Profit</h6>
+                <h5 style={{color: "white", fontWeight: "500", textAlign: "center"}}>$2,000</h5>
+              </div>
+              <div className="card" style={{backgroundColor: "#195289", textAlign: "center", marginTop: "0.5em", marginBottom: "0.5em", width: "50%", aspectRatio: "1 / 1"}}>
+                <h6 style={{ color: "white", fontWeight: "bold", textAlign: "center"  }}>Funds In Vault</h6>
+                <h5 style={{color: "#a9c9e6", fontWeight: "500", textAlign: "center"}}>{Math.floor(fundsInContract * 100) / 100} MATIC</h5>
+              </div>
           </div>
+          
+          <div style={{display: "flex"}}>
+        <div className="card" style={{backgroundColor: "#195289", textAlign: "center", marginTop: "0.5em", marginBottom: "0.5em",  marginLeft: "1em", width: "50%",aspectRatio: "1 / 1", marginRight: "1em"}}>
+                <h6 style={{ color: "white", fontWeight: "bold", textAlign: "center"  }}>SNOW/MATIC</h6>
+                <h5 style={{color: "#a9c9e6", fontWeight: "500", textAlign: "center"}}>{parseInt(snowPerMatic).toLocaleString("en-US")}</h5>
+              </div>
+              <div className="card" style={{backgroundColor: "#a9c9e6", textAlign: "center", marginTop: "0.5em", marginBottom: "0.5em", width: "50%", aspectRatio: "1 / 1"}}>
+                <h6 style={{ color: "#15538a", fontWeight: "bold", textAlign: "center"  }}>SNOW Supply</h6>
+                <h5 style={{color: "white", fontWeight: "500", textAlign: "center"}}>{Math.floor(snowSupply).toLocaleString("en-US")}</h5>
+              </div>
+
+        </div>
+
+        </div>
+        <div style={{width: "100%", display: "flex", justifyContent: "center", alignItems: "center"}}>
+        <img src={vaultImg} style={{width: "25vw"}}></img>
+        </div>
+        </div>
         </div>
       </div>
+<div style={{ display: "flex", flexDirection:"column",marginTop: "1.5em", justifyContent: "center", alignItems: "center", width: "100%"}}>
       <h1>
         Recent <b>SNOW Coin</b> Transactions
       </h1>
+      <div style={{width: "85%", marginTop: "0.5em"}}>
       <Table
-        columnsConfig="1fr 1fr 1fr 1fr"
+        columnsConfig="2fr 2fr 2fr 2fr"
         data={snowTxs}
         header={[
           <span>Type</span>,
@@ -292,7 +406,8 @@ function SnowPool() {
         justifyCellItems="center"
         isScrollableOnOverflow={false}
       />
-
+      </div>
+</div>
       <Modal
         isOpen={isOpen}
         onClose={() => handleCloseDialog()}
@@ -328,16 +443,31 @@ function SnowPool() {
                 onChangeTraditional={(val) => setUnit(val.target.value)}
               />
             </div>
+            <div style={{display: "flex", justifyContent:"center", width: "100%", marginTop: "0.5em"}}>
+              <Button theme="primary" text="Submit" onClick={() => handleConfirm()}/>
+              <Button theme="secondary" text="Cancel" onClick={() => handleCloseDialog()}/>
+            </div>
           </>
         )}
         {!confirmed && pending && (
           <>
-            <h4>Your Transaction Is On It's Way</h4>
+          <VaultAnimation />
+            <h4>Your Transaction Is Being Processed...</h4>
           </>
         )}
         {confirmed && !pending && (
           <>
-            <h4>Transaction Confirmed! Your {type} is on its way</h4>
+          <Success />
+          <div style={{display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center"}}>
+            <h4 style={{marginBottom: "0.5em"}}><b>Transaction Confirmed!</b></h4>
+            {type === "Withdraw" ? 
+            <>
+              <h4 >Funds have been deposited to your account</h4>
+                <h4>You have burnt {amount} SNOW Coins</h4>
+                </>
+               : 
+              <h4 >{amount} {unit} were depositted to the vault</h4>}
+              </div>
           </>
         )}
       </Modal>

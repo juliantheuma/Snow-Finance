@@ -1,0 +1,14 @@
+{
+  "projects": {
+    "default": "fundamentals-8cb60"
+  },
+  "targets": {},
+  "etags": {
+    "fundamentals-8cb60": {
+      "extensionInstances": {
+        "moralis-streams": "f8f27b17d495a84a3485513a2c4cbe30e510bf2af522a276b784ac99ed6343d1",
+        "firestore-stripe-payments": "5ab9b169936787f42bc83dbf47073ed0e5f2b63559eb5effde8265840c7b4887"
+      }
+    }
+  }
+}

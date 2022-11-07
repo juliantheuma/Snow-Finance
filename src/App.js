@@ -12,6 +12,8 @@ import SnowPool from "./SnowPool/SnowPool";
 import { Web3Context } from "./Web3Context";
 import { Web3AuthContext } from "./Web3Context";
 import SnowMen from "./Snowmen/SnowMen";
+import DepositHandler from "./DepositHandler/DepositHandler";
+import Home from "./Home/Home";
 
 function App() {
   const [web3, setWeb3] = useState(null);
@@ -474,13 +476,17 @@ function App() {
           <div style={{ display: "flex" }}>
             <Sidebar />
             <div
-              style={{ marginLeft: "250px", width: "100%", marginTop: "47px" }}
+              style={{  marginLeft: "250px", width: "100%", marginTop: "47px", backgroundColor: "#f7f7f7", height: "100%" }}
             >
               <Routes>
                 <Route path="portfolio" element={<Portfolio />}></Route>
                 <Route path="stocks/:ticker" element={<Stock />}></Route>
                 <Route path="snowpool" element={<SnowPool />}></Route>
                 <Route path="snowmen" element={<SnowMen />}></Route>
+                <Route path="deposit/:type" element={<DepositHandler />}></Route>
+                <Route path="/" exact element={<Home />}></Route>
+
+
               </Routes>
             </div>
           </div>

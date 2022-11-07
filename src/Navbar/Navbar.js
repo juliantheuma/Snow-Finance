@@ -11,6 +11,7 @@ import { Link } from "react-router-dom";
 
 import { Web3Context } from "../Web3Context";
 import { Web3AuthContext } from "../Web3Context";
+import { LogOut } from "@web3uikit/icons";
 
 function Navbar() {
   const web3Context = useContext(Web3Context);
@@ -48,6 +49,8 @@ function Navbar() {
       a.initModal();
       await web3AuthContext.setWeb3Auth(a);
       console.log(web3AuthContext);
+
+
     }
   }, []);
 
@@ -105,10 +108,10 @@ function Navbar() {
             <div className="avatar-container">
               {avatarClicked && (
                 <div className="dropdown-container">
-                  <Link to="portfolio">
-                    <h5 onClick={() => handlePortfolioClicked()}>Portfolio</h5>
-                  </Link>
+                  <div style={{display: "flex", alignItems: "center", justifyContent: "space-around", width: "100%"}}>
+                  <LogOut fontSize="24px"  />
                   <h5 onClick={() => handleLogout()}>Logout</h5>
+                    </div>
                 </div>
               )}
             </div>

@@ -1,5 +1,9 @@
 import { Avatar, Button, Tab, Table, TabList, Tag } from "@web3uikit/core";
 import React, { useContext, useEffect, useState } from "react";
+import BankTransfer from "../Animations/BankTransferAnimation";
+import LoadingAnimation from "../Animations/LoadingAnimation";
+import Signature from "../Animations/Signature";
+import Success from "../Animations/Success";
 import "../App.css";
 import Modal from "../Components/Modal";
 import { tradingPlatformABI } from "../ContractsABI";
@@ -8,6 +12,7 @@ import { deposit, getMaticPrice } from "../firebase";
 import snowman from "../Navbar/pfpPlaceholder.jpg";
 import MySnowmen from "../Snowmen/MySnowmen";
 import { Web3Context } from "../Web3Context";
+import coinImage from "./coin.png"
 
 function Portfolio() {
   const [modalIsOpen, setModalIsOpen] = useState(false);
@@ -16,6 +21,9 @@ function Portfolio() {
   const [openTrades, setOpenTrades] = useState([]);
   const [tradeHistory, setTradeHistory] = useState([]);
   const web3Context = useContext(Web3Context);
+  const [dataLoaded, setDataLoaded] = useState(false);
+  const [closingTrade, setClosingTrade] = useState(null)
+  const [orderState, setOrderState] = useState(null)
 
   useEffect(() => {
     loadData();
@@ -52,6 +60,7 @@ function Portfolio() {
           console.log("Trade History Details");
           setOpenTrades(openTradeDetails);
           setTradeHistory(tradeHistoryDetails);
+          setDataLoaded(true)
 
           console.log(tradeHistoryDetails);
 
@@ -174,60 +183,95 @@ function Portfolio() {
       return res;
     }
   }, [web3Context]);
+
+  async function handleClosePosition(idToClose) {
+    let tradingContract = new web3Context.web3.eth.Contract(
+      tradingPlatformABI,
+      tradingPlatformAddress
+    );
+
+    tradingContract.methods
+      .closeTrade(idToClose)
+      .send({ from: wallet })
+      .on("transactionHash", (hash) => {
+        console.log("Hash");
+        console.log(hash);
+        setOrderState("pending");
+      })
+      .on("receipt", (receipt) => {
+        console.log("receipt");
+        console.log(receipt);
+        setOrderState("confirmed");
+      })
+      .on("confirmation", (receipt) => {
+        console.log("Confirmation");
+        console.log(receipt);
+      })
+      .on("error", (error) => {
+        console.log("error");
+        console.log(error);
+        setOrderState("failed");
+      });
+  }
+
   return (
-    <div>
-      <div className="p-15">
-        <h4>Total Funds</h4>
-        <h1>$175,000</h1>
+    <div style={{height: "100vh", paddingTop: "2em"}}>
+      <div className="p-15" style={{width: "80%", margin: "0 auto"}}>
+        <h4 style={{fontWeight: "bold"}}>Total Funds</h4>
+        <h1 style={{fontSize: "32px", marginBottom: "0.1em"}}>$175,000</h1>
         <Button
           text="+ Deposit"
-          theme="primary"
+          theme="secondary"
           onClick={() => {
             setModalIsOpen(true);
             // deposit100();
           }}
         />
       </div>
-      <div>
+      <div style={{marginTop: "2em"}}>
+        <div style={{margin: "0 auto", width: "80%"}}>
         <MySnowmen />
-        <TabList
-          defaultActiveKey={1}
-          onChange={function noRefCheck() {}}
-          tabStyle="bar"
-        >
-          <Tab
-            tabKey={1}
-            tabName={
-              <div style={{ display: "flex" }}>
-                <span style={{ paddingLeft: "4px" }}>Active Trades</span>
-              </div>
-            }
-          >
-            {openTrades.length > 0 &&
+        </div>
+        <div style={{width: "80%", margin: "0 auto", paddingTop: "2em"}}>
+          <h4 style={{fontWeight: "bold", marginBottom: "0.5em"}}>Your Active Trades</h4>
+          <div style={{ backgroundColor: "#F7F7F7", borderRadius: "0.5em", minHeight: "300px"}}>
+          <div style={{display: "flex", marginBottom: "1em", backgroundColor: "#195289", borderRadius: "10px", paddingTop: "0.25em", paddingBottom: "0.25em", color: "white"}}>
+            <h4 style={{width: "25%", display: "flex", justifyContent: "center", fontWeight: "bold"}}>Amount</h4>
+            <h4 style={{width: "25%", display: "flex", justifyContent: "center", fontWeight: "bold"}}>Type</h4>
+            <h4 style={{width: "25%", display: "flex", justifyContent: "center", fontWeight: "bold"}}>Profit or Loss</h4>
+            <h4 style={{width: "25%", display: "flex", justifyContent: "center", fontWeight: "bold"}}></h4>
+          </div>
+        {dataLoaded && openTrades.length > 0 &&
               openTrades.map((openTrade) => (
                 <div
                   key={openTrade.id}
                   style={{
                     display: "flex",
                     width: "100%",
-                    justifyContent: "space-around",
                     marginBottom: "0.3em",
                   }}
                 >
+                  <div style={{width: "25%", display: "flex", justifyContent: "center"}}>
                   {web3Context &&
                     Math.round(
                       web3Context.web3.utils.fromWei(openTrade.amount) * 100
-                    ) /
+                      ) /
                       100 +
                       " " +
                       openTrade.ticker}
+                      </div>
+                  <div style={{width: "25%", display: "flex", justifyContent: "center"}}>
+
                   <Tag
-                    color={openTrade.type === "LONG" ? "green" : "red"}
+                    color="black"
                     onCancelClick={function noRefCheck() {}}
                     text={openTrade.type}
                     tone="dark"
-                    fontSize="10px"
+                    fontSize="12px"
                   />
+                  </div>
+                  <div style={{width: "25%", display: "flex", justifyContent: "center"}}>
+
                   <span
                     style={{
                       color:
@@ -242,165 +286,144 @@ function Portfolio() {
                     {Math.round(openTrade.profitAndLoss.percentage * 100) / 100}
                     %)
                   </span>
+                  </div>
+                  <div style={{width: "25%", display: "flex", justifyContent: "center"}}>
                   <Button
-                    text="close"
-                    theme="secondary"
+                    text="x"
+                      color="red"
+                    theme="colored"
                     onClick={() => {
-                      // setClosingTrade(openTrade);
-                      // setOrderState("closing");
-                      // setModalIsOpen(true);
-                      //handleClosePosition(openTrade.id)}
+                      setClosingTrade(openTrade);
+                      setOrderState("closing");
+                      setModalIsOpen(true);
+                      // handleClosePosition(openTrade.id)
                     }}
+                    size="regular"
                   />
+                  </div>
                 </div>
               ))}
-            {openTrades.length === 0 && (
-              <h4>You currently don't have any open orders.</h4>
+            {dataLoaded && openTrades.length === 0 && (
+              <h4 style={{textAlign: "center", margin: "0 auto"}}>You currently don't have any open orders.</h4>
             )}
-          </Tab>
-          <Tab
-            tabKey={2}
-            tabName={
-              <div style={{ display: "flex" }}>
-                <span style={{ paddingLeft: "4px" }}>Trade History</span>
-              </div>
-            }
-          >
-            <div style={{ height: "250px", width: "350px" }}>
-              <Table
-                columnsConfig="1fr 1fr 1fr"
-                data={[
-                  [
-                    <Avatar isRounded size={36} theme="image" />,
-                    <Tag color="blue" text="Nft Collection" />,
-                    "0x18...130e",
-                  ],
-                  [
-                    <Avatar fontSize={36} isRounded theme="image" />,
-                    <Tag color="red" text="Lazy Nft" />,
-                    "0x18...130e",
-                  ],
-                  [
-                    <Avatar fontSize={36} isRounded theme="image" />,
-                    <Tag color="yellow" text="Pack" />,
-                    "0x18...130e",
-                  ],
-                  [
-                    <Avatar fontSize={36} isRounded theme="image" />,
-                    <Tag color="red" text="Nft Marketplace" />,
-                    "0x18...130e",
-                  ],
-                  [
-                    <Avatar fontSize={36} isRounded theme="image" />,
-                    <Tag color="purple" text="Bundle" />,
-                    "0x18...130e",
-                  ],
-                  [
-                    <Avatar fontSize={36} isRounded theme="image" />,
-                    <Tag color="green" text="Token" />,
-                    "0x18...130e",
-                  ],
-                  [
-                    <Avatar fontSize={36} isRounded theme="image" />,
-                    <Tag color="blue" text="Nft Collection" />,
-                    "0x18...130e",
-                  ],
-                  [
-                    <Avatar fontSize={36} isRounded theme="image" />,
-                    <Tag color="red" text="Bundle" />,
-                    "0x18...130e",
-                  ],
-                  [
-                    <Avatar fontSize={36} isRounded theme="image" />,
-                    <Tag color="green" text="Token" />,
-                    "0x18...130e",
-                  ],
-                  [
-                    <Avatar fontSize={36} isRounded theme="image" />,
-                    <Tag color="blue" text="Nft Collection" />,
-                    "0x18...130e",
-                  ],
-                  [
-                    <Avatar fontSize={36} isRounded theme="image" />,
-                    <Tag color="red" text="Lazy Nft" />,
-                    "0x18...130e",
-                  ],
-                  [
-                    <Avatar fontSize={36} isRounded theme="image" />,
-                    <Tag color="yellow" text="Pack" />,
-                    "0x18...130e",
-                  ],
-                ]}
-                header={["", <span>Type</span>, <span>Amount</span>]}
-                isColumnSortable={[false, true, true]}
-                maxPages={3}
-                onPageNumberChanged={function noRefCheck() {}}
-                onRowClick={function noRefCheck() {}}
-                pageSize={5}
-                alignCellItems="center"
-                justifyCellItems="center"
-                isScrollableOnOverflow={true}
-              />
+            {!dataLoaded && <LoadingAnimation /> }
             </div>
-          </Tab>
-        </TabList>
+            </div>
+        
       </div>
-      <Modal isOpen={modalIsOpen}>
-        {depositState === "selecting" && (
+      <Modal isOpen={modalIsOpen} onClose={() => setModalIsOpen(false)}>
+        {depositState === "selecting" && !orderState && (
           <>
-            <h4>
-              Deposits are currently limited to $1.00 due to our low number of
-              funds of Mumbai MATIC. Please select how much you would like to
-              deposit.
+            <h4 style={{textAlign: "center", color:"#001e3d"}}>
+              <b>Select Amount To Deposit</b>
+              
             </h4>
             <div
               style={{
                 width: "100%",
                 display: "flex",
-                justifyContent: "space-around",
+                justifyContent: "center",
                 marginTop: "1em",
               }}
             >
               <div
                 style={{
                   width: "20%",
-                  backgroundColor: "#a4b0be",
-                  borderRadius: "10%",
+                  backgroundColor: "#A9C9E6",
+                  borderRadius: "5%",
                   textAlign: "center",
                   paddingTop: "50px",
                   paddingBottom: "50px",
+                  marginRight: "3em",
+                  cursor: "pointer"
                 }}
                 onClick={() => {
                   setDepositState("loading");
                   deposit(50);
                 }}
               >
-                $0.50
+                <h4 style={{textAlign: "center", fontSize: "1.5em"}}><b>$0.50</b></h4>
               </div>
               <div
                 style={{
                   width: "20%",
-                  backgroundColor: "#a4b0be",
-                  borderRadius: "10%",
+                  backgroundColor: "#195289",
+                  borderRadius: "5%",
                   textAlign: "center",
                   paddingTop: "50px",
                   paddingBottom: "50px",
+                  color: "white",
+                  cursor: "pointer"
                 }}
                 onClick={() => {
                   setDepositState("loading");
                   deposit(100);
                 }}
               >
+                <b style={{fontSize: "1.5em"}}>
                 $1.00
+                </b>
               </div>
             </div>
+            <h4 style={{textAlign: "center", marginTop: "2em", color: "#737373"}}>Note! Deposits are currently limited to $1.00 due to our low number of
+              funds of Mumbai MATIC. Please select how much you would like to
+              deposit.</h4>
           </>
         )}
         {depositState === "loading" && (
           <>
+          <BankTransfer />
             <h4>Connecting to Financial Service Provider...</h4>
           </>
         )}
+        {orderState === "closing" && (
+          <>
+            <h4 style={{ marginBottom: "1em" }}>
+              <b>Are you sure you want to close this trade?</b>
+            </h4>
+            {/* <h4>Transaction ID: {closingTrade.id}</h4>
+            <h4>
+              Amount: {web3Context.web3.utils.fromWei(closingTrade.amount)}{" "}
+              {stockInfo && stockInfo.name}
+            </h4>
+            <h4>
+              Profit And Loss: ${closingTrade.profitAndLoss.amount} (
+              {closingTrade.profitAndLoss.type === "PROFIT" ? "+" : "-"}
+              {Math.round(closingTrade.profitAndLoss.percentage * 100) / 100}%)
+            </h4> */}
+            <div style={{ display: "flex" }}>
+              <Button
+                theme="primary"
+                text="Confirm"
+                onClick={() => {
+                  handleClosePosition(closingTrade.id);
+                  setOrderState("sign");
+                }}
+              />
+              <Button theme="secondary" text="Cancel" />
+            </div>
+          </>
+        )}
+        {orderState === "sign" && (
+          <>
+          <Signature />
+            <h4>Please Sign the tx.</h4>
+          </>
+        )}
+        {orderState === "pending" && (
+          <>
+            <LoadingAnimation />
+            <h4>Your Order Is Being Closed!</h4>
+          </>
+        )}
+        {orderState === "confirmed" && (
+          <>
+          <Success />
+            <h4>Transaction Complete</h4>
+            {/* <h4>{orderAmount + " " + stockInfo.name} shares have been added to your account</h4> */}
+          </>
+        )}
+        {orderState === "failed" && <h4>Txn failed. Please try again</h4>}
       </Modal>
     </div>
   );

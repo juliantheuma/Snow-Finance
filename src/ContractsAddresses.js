@@ -1,5 +1,5 @@
-export const snowCoinAddress = "0xCFcA746Acced1F288B8E4C58bA33d5fAaB61A19B";
-export const snowmanAddress = "0x02dc1DD303496B4C91063aE1C97AFc04b301e248";
-export const snowPoolAddress = "0x430d59401947ad99f1241740256e902023eCD1D4";
+export const snowCoinAddress = "0xB2442D482eFAEF25d75fC6d508B39384e1A43b39";
+export const snowmanAddress = "0x7cE4d467b44A8E581105c6808ec0a9a31Ea5b7a9";
+export const snowPoolAddress = "0x8596811ffD2C6AE4925A1132dAC5BCB53C84ed70";
 export const tradingPlatformAddress =
-  "0x3e0eDF1C9CFc80b04dEca884C6A51f702dd8B95f";
+  "0x9b41430da668980015DE684D6AdBA54a43b926a8";

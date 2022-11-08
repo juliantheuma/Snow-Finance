@@ -96,14 +96,19 @@ function Portfolio() {
 
               profitAmount = profitAmount * maticPrice;
 
-              console.log(web3Context.web3.utils.fromWei(parsed.price));
+              console.log("bought at: ",web3Context.web3.utils.fromWei(parsed.price) + "MATIC");
+
+              console.log("price now: ",stockPriceInMatic + "MATIC")
+
+              let profitPercentage = 100 * (web3Context.web3.utils.fromWei(parsed.price) - stockPriceInMatic) / web3Context.web3.utils.fromWei(parsed.price)
 
               let profitType = profitAmount >= 0 ? "PROFIT" : "LOSS";
-              let profitPercentage =
+              let profitPercentage1 =
                 (parseFloat(profitAmount) * 100) /
                 web3Context.web3.utils.fromWei(parsed.investment);
 
               console.log("$" + profitAmount);
+              console.log(profitPercentage + "%")
               console.log(web3Context.web3.utils.fromWei(parsed.investment));
 
               if (
@@ -126,7 +131,8 @@ function Portfolio() {
               } else if (details.settled === true) {
                 parsed.profitAndLoss = null;
               }
-
+              console.log(parsed)
+              if(parsed.profitAndLoss && parsed.profitAndLoss.type === "LOSS"){parsed.profitAndLoss.percentage *= -1}
               tradeHistoryDetails.push(parsed);
               index++;
               return getDetails();

@@ -157,6 +157,7 @@ function Stock() {
     if (orderUnit === "USD") {
       //USD --> MATIC
       orderAmountInMatic = orderAmount / maticPrice;
+      console.log(orderAmountInMatic)
     } else if (orderUnit === ticker) {
       //AAPL --> USD --> MATIC
       console.log(orderAmount + " shares");
@@ -170,6 +171,8 @@ function Stock() {
     let a = Math.trunc(orderAmountInMatic).toString();
     let b = orderAmountInMatic.toFixed(18 - a.length);
     let orderAmountInMaticWei = web3Context.web3.utils.toWei(b);
+
+    console.log(orderAmountInMaticWei)
     console.log(wallet);
     tradingContract.methods
       .order(ticker, orderType)

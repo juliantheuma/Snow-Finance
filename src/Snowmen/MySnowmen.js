@@ -18,13 +18,10 @@ function MySnowmen() {
     async function load() {
       let accounts = await web3Context.web3.eth.getAccounts();
       setWallet(accounts[0]);
-      console.log(accounts[0]);
       let snowmen = await getSnowmenNfts(accounts[0]);
-      console.log(snowmen);
 
       let index = 0;
       await getSnowmanImage();
-      console.log(snowmenMetadata);
       setMySnowmen(snowmenMetadata);
 
       async function getSnowmanImage() {
@@ -34,14 +31,11 @@ function MySnowmen() {
             method: "GET",
             redirect: "follow",
           };
-          console.log(snowmen.json.result[index]);
 
           await fetch(snowmen.json.result[index].token_uri, requestOptions)
             .then((response) => response.text())
             .then((result) => {
-              console.log(result);
               let metadata = JSON.parse(result);
-              console.log(metadata);
 
               snowmenMetadata.push({
                 metadata,

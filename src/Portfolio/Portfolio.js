@@ -1,17 +1,18 @@
 import { Avatar, Button, Tab, Table, TabList, Tag } from "@web3uikit/core";
 import React, { useContext, useEffect, useState } from "react";
+import Web3 from "web3";
 import BankTransfer from "../Animations/BankTransferAnimation";
 import LoadingAnimation from "../Animations/LoadingAnimation";
 import Signature from "../Animations/Signature";
 import Success from "../Animations/Success";
 import "../App.css";
 import Modal from "../Components/Modal";
-import { tradingPlatformABI } from "../ContractsABI";
-import { tradingPlatformAddress } from "../ContractsAddresses";
-import { deposit, getMaticPrice } from "../firebase";
+import { snowCoinABI, snowPoolABI, tradingPlatformABI } from "../ContractsABI";
+import { snowCoinAddress, snowPoolAddress, tradingPlatformAddress } from "../ContractsAddresses";
+import { deposit, getMaticPrice, getToken, tokenSignIn } from "../firebase";
 import snowman from "../Navbar/pfpPlaceholder.jpg";
 import MySnowmen from "../Snowmen/MySnowmen";
-import { Web3Context } from "../Web3Context";
+import { Web3AuthContext, Web3Context } from "../Web3Context";
 import coinImage from "./coin.png"
 
 function Portfolio() {
@@ -20,10 +21,13 @@ function Portfolio() {
   const [wallet, setWallet] = useState(null);
   const [openTrades, setOpenTrades] = useState([]);
   const [tradeHistory, setTradeHistory] = useState([]);
+  const web3AuthContext = useContext(Web3AuthContext)
   const web3Context = useContext(Web3Context);
   const [dataLoaded, setDataLoaded] = useState(false);
   const [closingTrade, setClosingTrade] = useState(null)
   const [orderState, setOrderState] = useState(null)
+  const [totalBalance, setTotalBalance] = useState(0)
+
 
   useEffect(() => {
     loadData();
@@ -89,107 +93,121 @@ function Portfolio() {
 
               console.log(parsed);
 
-              let profitAmount =
-                web3Context.web3.utils.fromWei(parsed.amount) *
-                  stockPriceInMatic -
-                web3Context.web3.utils.fromWei(parsed.investment);
+              if(parsed.settled !== true){
 
-              profitAmount = profitAmount * maticPrice;
+                let tickerData = await getStockData("MATIC", parsed.ticker);
+                let lastPrice = tickerData;
+                let purchasePrice = web3Context.web3.utils.fromWei(parsed.price);
 
-              console.log("bought at: ",web3Context.web3.utils.fromWei(parsed.price) + "MATIC");
+                let priceDifferenceInMatic = Math.abs(purchasePrice - lastPrice);
+                let priceDifferencePercentage = Math.abs(priceDifferenceInMatic * 100 / purchasePrice);
+                
+                let maticPrice = await getMaticPrice();
+                let priceDifferenceInUsd = priceDifferenceInMatic * maticPrice
+                
+                let profitOrLoss = Math.abs(priceDifferenceInUsd * web3Context.web3.utils.fromWei(parsed.amount))
+                
+                if((parsed.type === "LONG" && lastPrice > purchasePrice) ||
+                    (parsed.type === "SHORT" && lastPrice < purchasePrice)){
+                  parsed.isProfitable = true;
+                }
+                else{
+                  parsed.isProfitable = false;
+                }
+                  parsed.priceDifferenceInMatic = priceDifferenceInMatic;
+                  parsed.priceDifferenceInUsd = priceDifferenceInUsd
+                  parsed.priceDifferencePercentage = priceDifferencePercentage;
+                  parsed.profitOrLoss = profitOrLoss;
 
-              console.log("price now: ",stockPriceInMatic + "MATIC")
-
-              let profitPercentage = 100 * (web3Context.web3.utils.fromWei(parsed.price) - stockPriceInMatic) / web3Context.web3.utils.fromWei(parsed.price)
-
-              let profitType = profitAmount >= 0 ? "PROFIT" : "LOSS";
-              let profitPercentage1 =
-                (parseFloat(profitAmount) * 100) /
-                web3Context.web3.utils.fromWei(parsed.investment);
-
-              console.log("$" + profitAmount);
-              console.log(profitPercentage + "%")
-              console.log(web3Context.web3.utils.fromWei(parsed.investment));
-
-              if (
-                parsed.type === "SHORT" &&
-                web3Context.web3.utils.fromWei(parsed.price) <
-                  maticPrice * stockPriceInMatic
-              ) {
-                profitAmount *= -1;
-                profitPercentage *= -1;
-                profitType = "LOSS";
+                openTradeDetails.push(parsed)
               }
 
-              parsed.profitAndLoss = {
-                type: profitType,
-                amount: profitAmount,
-                percentage: profitPercentage,
-              };
-              if (details.settled == false) {
-                openTradeDetails.push(parsed);
-              } else if (details.settled === true) {
-                parsed.profitAndLoss = null;
-              }
-              console.log(parsed)
-              if(parsed.profitAndLoss && parsed.profitAndLoss.type === "LOSS"){parsed.profitAndLoss.percentage *= -1}
+              // let profitAmount =
+              //   web3Context.web3.utils.fromWei(parsed.amount) *
+              //     stockPriceInMatic -
+              //   web3Context.web3.utils.fromWei(parsed.investment);
+
+              // profitAmount = profitAmount * maticPrice;
+
+              // console.log("bought at: ",web3Context.web3.utils.fromWei(parsed.price) + "MATIC");
+
+              // console.log("price now: ",stockPriceInMatic + "MATIC")
+
+              // let profitPercentage = 100 * (web3Context.web3.utils.fromWei(parsed.price) - stockPriceInMatic) / web3Context.web3.utils.fromWei(parsed.price)
+
+              // let profitType = profitAmount >= 0 ? "PROFIT" : "LOSS";
+              // let profitPercentage1 =
+              //   (parseFloat(profitAmount) * 100) /
+              //   web3Context.web3.utils.fromWei(parsed.investment);
+
+              // console.log("$" + profitAmount);
+              // console.log(profitPercentage + "%")
+              // console.log(web3Context.web3.utils.fromWei(parsed.investment));
+
+              // if (
+              //   parsed.type === "SHORT" &&
+              //   web3Context.web3.utils.fromWei(parsed.price) <
+              //     maticPrice * stockPriceInMatic
+              // ) {
+              //   profitAmount *= -1;
+              //   profitPercentage *= -1;
+              //   profitType = "LOSS";
+              // }
+
+              // parsed.profitAndLoss = {
+              //   type: profitType,
+              //   amount: profitAmount,
+              //   percentage: profitPercentage,
+              // };
+              // if (details.settled == false) {
+              //   openTradeDetails.push(parsed);
+              // } else if (details.settled === true) {
+              //   parsed.profitAndLoss = null;
+              // }
+              // console.log(parsed)
+              // if(parsed.profitAndLoss && parsed.profitAndLoss.type === "LOSS"){parsed.profitAndLoss.percentage *= -1}
               tradeHistoryDetails.push(parsed);
               index++;
               return getDetails();
             }
-            async function getTotalBalance() {
-              let totalBalance = 0;
-
-              //get MATIC Balance
-              //  Convert to USD
-              //  add to portfolio[] {value: "999.99", name: "MATIC"}
-
-              //get Active Trades
-              //  foreach active trade
-              //    get amount * currentPrice
-              //    add to portfolio[] {value: "999.99", name: "AAPL"}
-
-              //get SNOW Balance
-              //  SNOW * MATIC / SNOW
-              //    Convert to USD
-              //    add to portfolio[] {value: "999.99", name: "SNOW"}
-            }
+            
           }
         });
+        await getTotalBalance()
     }
-
-    async function getStockData(unit = "USD", ticker) {
-      let res = null;
-      var requestOptions = {
-        method: "GET",
-        redirect: "follow",
-      };
-      let url = null;
-      if (unit === "USD") {
-        url = `https://quote.cnbc.com/quote-html-webservice/restQuote/symbolType/symbol?symbols=${ticker}&requestMethod=itv&noform=1&partnerId=2&fund=1&exthrs=1&output=json&events=1`;
-      } else if (unit === "MATIC") {
-        url = `https://ice-finance-matic-api.herokuapp.com/stocks/${ticker}`;
-      }
-
-      await fetch(url, requestOptions)
-        .then((response) => response.text())
-        .then((result) => {
-          let data = JSON.parse(result);
-          if (unit === "USD") {
-            let stockData = data.FormattedQuoteResult.FormattedQuote[0];
-            console.log(stockData);
-            res = stockData;
-          } else if (unit === "MATIC") {
-            let stockData = data.stockPriceInMatic;
-            res = stockData;
-            console.log(stockData);
-          }
-        })
-        .catch((error) => console.log("error", error));
-      return res;
-    }
+    
+    
   }, [web3Context]);
+  async function getStockData(unit = "USD", ticker) {
+    let res = null;
+    var requestOptions = {
+      method: "GET",
+      redirect: "follow",
+    };
+    let url = null;
+    if (unit === "USD") {
+      url = `https://quote.cnbc.com/quote-html-webservice/restQuote/symbolType/symbol?symbols=${ticker}&requestMethod=itv&noform=1&partnerId=2&fund=1&exthrs=1&output=json&events=1`;
+    } else if (unit === "MATIC") {
+      url = `https://ice-finance-matic-api.herokuapp.com/stocks/${ticker}`;
+    }
 
+    await fetch(url, requestOptions)
+      .then((response) => response.text())
+      .then((result) => {
+        let data = JSON.parse(result);
+        if (unit === "USD") {
+          let stockData = data.FormattedQuoteResult.FormattedQuote[0];
+          console.log(stockData);
+          res = stockData;
+        } else if (unit === "MATIC") {
+          let stockData = data.stockPriceInMatic;
+          res = stockData;
+          console.log(stockData);
+        }
+      })
+      .catch((error) => console.log("error", error));
+    return res;
+  }
   async function handleClosePosition(idToClose) {
     let tradingContract = new web3Context.web3.eth.Contract(
       tradingPlatformABI,
@@ -219,12 +237,75 @@ function Portfolio() {
         setOrderState("failed");
       });
   }
+  async function getTotalBalance() {
+    let totalBalance = 0;
+
+    //get MATIC Balance
+    let maticBalance = await web3Context.web3.eth.getBalance(wallet);
+    console.log(maticBalance)
+    let maticPrice = await getMaticPrice();
+    totalBalance += (web3Context.web3.utils.fromWei(maticBalance) * maticPrice)
+    //  Convert to USD
+    //  add to portfolio[] {value: "999.99", name: "MATIC"}
+    openTrades.forEach(async openTrade => {
+      console.log(openTrade.ticker)
+      let stockDetails = await getStockData("USD", openTrade.ticker)
+      totalBalance += stockDetails.ExtendedMktQuote.last * web3Context.web3.utils.fromWei(openTrade.amount)
+    })
+
+    let snowCoincontract = new web3Context.web3.eth.Contract(
+      snowCoinABI,
+      snowCoinAddress
+    );
+
+    let snowPoolContract = new web3Context.web3.eth.Contract(
+      snowPoolABI,
+      snowPoolAddress
+    );
+
+    let snowBal = await snowCoincontract.methods.balanceOf(wallet).call();
+    snowBal = snowBal / 10 ** 18;
+
+    let snowPerMatic = await snowPoolContract.methods.getSnowPerMatic().call();
+    let _maticPerSnow = 1 / snowPerMatic;
+
+    let snowBalInMatic = _maticPerSnow * snowBal
+
+    totalBalance += maticPrice * snowBalInMatic
+
+    console.log(totalBalance)
+    setTotalBalance(totalBalance)
+    //get Active Trades
+    //  foreach active trade
+    //    get amount * currentPrice
+    //    add to portfolio[] {value: "999.99", name: "AAPL"}
+
+    //get SNOW Balance
+    //  SNOW * MATIC / SNOW
+    //    Convert to USD
+    //    add to portfolio[] {value: "999.99", name: "SNOW"}
+  }
+  async function handleSignIn() {
+    console.log("Signing In...");
+    const provider = await web3AuthContext.web3Auth.connect();
+    console.log(web3AuthContext.web3Auth);
+    console.log(provider);
+    let b = new Web3(web3AuthContext.web3Auth.provider);
+    let accounts = await b.eth.getAccounts();
+    web3Context.setWeb3(b);
+
+    let myAddress = accounts[0];
+
+    let token = await getToken(myAddress);
+    await tokenSignIn(token);
+  }
 
   return (
-    <div style={{height: "100vh", paddingTop: "2em"}}>
+    <>
+    {wallet && <div style={{height: "100vh", paddingTop: "2em"}}>
       <div className="p-15" style={{width: "80%", margin: "0 auto"}}>
         <h4 style={{fontWeight: "bold"}}>Total Funds</h4>
-        <h1 style={{fontSize: "32px", marginBottom: "0.1em"}}>$175,000</h1>
+        <h1 style={{fontSize: "32px", marginBottom: "0.1em"}}>${totalBalance.toLocaleString("en-US")}</h1>
         <Button
           text="+ Deposit"
           theme="secondary"
@@ -281,15 +362,15 @@ function Portfolio() {
                   <span
                     style={{
                       color:
-                        openTrade.profitAndLoss.type === "PROFIT"
+                        openTrade.isProfitable
                           ? "green"
                           : "red",
                     }}
                   >
-                    {openTrade.profitAndLoss.type === "PROFIT" ? "+$" : "-$"}
-                    {Math.round(openTrade.profitAndLoss.amount * 100) / 100}(
-                    {openTrade.profitAndLoss.type === "PROFIT" ? "+" : ""}
-                    {Math.round(openTrade.profitAndLoss.percentage * 100) / 100}
+                    {openTrade.isProfitable ? "+$" : "-$"}
+                    {Math.round(openTrade.profitOrLoss * 100) / 100}(
+                    {openTrade.isProfitable ? "+" : ""}
+                    {Math.round(openTrade.priceDifferencePercentage * 100) / 100}
                     %)
                   </span>
                   </div>
@@ -431,7 +512,15 @@ function Portfolio() {
         )}
         {orderState === "failed" && <h4>Txn failed. Please try again</h4>}
       </Modal>
-    </div>
+    </div>}
+    {!wallet && <>
+      <div style={{height: "100vh", display: "flex", justifyContent: "center", alignItems: "center", flexDirection: "column"}}>
+      <h4>Please <b>Sign In</b> to view your <b>portfolio</b>...</h4>
+      <h4 style={{marginBottom: "0.5em"}}>Your portfolio is a summary of all your assets: Stocks, Snowmen, Snow Coins </h4>
+      <Button theme="primary" onClick={() => handleSignIn()} text="Sign In"  />
+      </div>
+    </>}
+    </>
   );
 }
 

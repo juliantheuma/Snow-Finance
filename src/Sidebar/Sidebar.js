@@ -5,10 +5,13 @@ import { SidebarData } from "./SidebarData";
 import { Link } from "react-router-dom";
 import { Search } from "@web3uikit/icons";
 
+import { useLocation } from 'react-router-dom';
+
 
 function Sidebar() {
   const [sidebarTicker, setSidebarTicker] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(true)
+  const _location = useLocation();
 
   return (
     <>
@@ -43,7 +46,7 @@ function Sidebar() {
             <Link to={val.link}>
               <li
                 className="row"
-                id={window.location.pathname == val.link ? "active" : ""}
+                id={_location.pathname == val.link ? "active" : ""}
                 key={key}
               >
                 <div id="icon">{val.icon}</div>{" "}

@@ -2,12 +2,12 @@ import { Avatar, Button, Input, Select, Table, Tag } from "@web3uikit/core";
 import React, { useContext, useEffect, useState } from "react";
 import { snowCoinABI, snowPoolABI } from "../ContractsABI";
 import { snowCoinAddress, snowPoolAddress } from "../ContractsAddresses";
-import { Web3Context } from "../Web3Context";
+import { Web3AuthContext, Web3Context } from "../Web3Context";
 import { ReactComponent as Vault } from "./vault.svg";
 import { Pie } from "react-chartjs-2";
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
 import "./SnowPool.css";
-import { db, getMaticPrice } from "../firebase";
+import { db, getMaticPrice, getToken, tokenSignIn } from "../firebase";
 import {
   collection,
   doc,
@@ -21,9 +21,11 @@ import { useNavigate } from "react-router-dom";
 import VaultAnimation from "../Animations/VaultAnimation";
 import Success from "../Animations/Success";
 import vaultImg from "./vault.png"
+import Web3 from "web3";
 ChartJS.register(ArcElement, Tooltip, Legend);
 
 function SnowPool() {
+  const web3AuthContext = useContext(Web3AuthContext)
   const web3Context = useContext(Web3Context);
   const [wallet, setWallet] = useState(null);
   const [snowBalance, setSnowBalance] = useState(0);
@@ -263,8 +265,24 @@ function SnowPool() {
     //   snowPoolContract.methods.depositAndMint(wallet);
     // }
   }
+
+  async function handleSignIn() {
+    console.log("Signing In...");
+    const provider = await web3AuthContext.web3Auth.connect();
+    console.log(web3AuthContext.web3Auth);
+    console.log(provider);
+    let b = new Web3(web3AuthContext.web3Auth.provider);
+    let accounts = await b.eth.getAccounts();
+    web3Context.setWeb3(b);
+
+    let myAddress = accounts[0];
+
+    let token = await getToken(myAddress);
+    await tokenSignIn(token);
+  }
   return (
-    <div style={{height: "100%"}}>
+    <>
+    {wallet && <div style={{height: "100%"}}>
       <div style={{ marginTop: "2em", height: "100%" }}>
         {/* <div
           className="left-container"
@@ -337,7 +355,7 @@ function SnowPool() {
 
           </div>
         </div> */}
-        <div style={{ width: "30%", marginLeft: "7.5%", marginBottom: "2em"}}>
+        <div style={{ width: "30%", marginLeft: "7.5%", marginBottom: "2em", display: "flex", alignItems: "center"}}>
           <div style={{backgroundColor: "#d9d9d940", paddingLeft: "1em", paddingRight: "1em", borderRadius: "21px", width: "100%"}}>
             <h1 style={{color: "white",textEmphasis: "bold", marginTop: "1em", backgroundColor: "#15538a", borderRadius: "12px", textAlign: "center", fontSize: "16px", paddingTop: "0.5em", paddingBottom: "0.5em", paddingRight: "2em", paddingLeft: "2em"}}><b>Your Balance {(Math.floor(snowBalance * 100) / 100).toLocaleString("en-US")} SNOW</b></h1>
             <div style={{display: "flex", justifyContent: "center", paddingTop: "0.5em", paddingBottom: "0.5em"}}>
@@ -346,7 +364,16 @@ function SnowPool() {
             </div>
             
           </div>
-
+          <div style={{marginLeft: "0.5em"}}>
+            <Button theme="secondary" text="Deposit" onClick={() => {
+                  setIsOpen(true);
+                  setType("Deposit");
+                }} />
+            <Button theme="secondary" text="Withdraw" onClick={() => {
+                  setIsOpen(true);
+                  setType("Withdraw");
+                }} />
+            </ div>
         </div>
         
         <div style={{display: "flex", width: "100%", justifyContent: "center"}} id="idk">
@@ -355,8 +382,8 @@ function SnowPool() {
 
         <div style={{display: "flex"}}>
         <div className="card" style={{backgroundColor: "#a9c9e6", textAlign: "center", marginTop: "0.5em", marginBottom: "0.5em", marginLeft: "1em", width: "50%", aspectRatio: "1 / 1", marginRight: "1em"}}>
-                <h6 style={{ color: "#15538a", fontWeight: "bold", textAlign: "center"  }}>Your Profit</h6>
-                <h5 style={{color: "white", fontWeight: "500", textAlign: "center"}}>$2,000</h5>
+                <h6 style={{ color: "#15538a", fontWeight: "bold", textAlign: "center"  }}>Your Share</h6>
+                <h5 style={{color: "white", fontWeight: "500", textAlign: "center"}}>{ (snowBalance / snowSupply) * 100}%</h5>
               </div>
               <div className="card" style={{backgroundColor: "#195289", textAlign: "center", marginTop: "0.5em", marginBottom: "0.5em", width: "50%", aspectRatio: "1 / 1"}}>
                 <h6 style={{ color: "white", fontWeight: "bold", textAlign: "center"  }}>Funds In Vault</h6>
@@ -471,7 +498,13 @@ function SnowPool() {
           </>
         )}
       </Modal>
-    </div>
+    </div>}
+    {!wallet && <div style={{height: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center"}}>
+      <h4>Please <b>sign in</b> to access the vault...</h4>
+      <h4 style={{marginBottom: "0.5em"}}>All Snow Finance's profits enter the vault and are distributed to SNOW Coin holders.</h4>
+      <Button text="Sign In" theme="primary" onClick={() => handleSignIn()}/>
+    </div>}
+    </>
   );
 }
 

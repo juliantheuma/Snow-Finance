@@ -28,8 +28,6 @@ function Navbar() {
     setUp();
 
     async function setUp() {
-      console.log(web3Context);
-      console.log(web3AuthContext);
 
       let a = new Web3Auth({
         clientId,
@@ -48,7 +46,6 @@ function Navbar() {
       });
       a.initModal();
       await web3AuthContext.setWeb3Auth(a);
-      console.log(web3AuthContext);
 
 
     }
@@ -86,7 +83,7 @@ function Navbar() {
   return (
     <div className="navbar">
       <img src={Logo} className="logo"></img>
-
+{/* 
       <div className="signIn-container">
         {!loggedIn && (
           <Button
@@ -95,7 +92,7 @@ function Navbar() {
             onClick={() => handleSignIn()}
           />
         )}
-        {loggedIn && (
+        {/* {loggedIn && (
           <div>
             <div className="flex">
               <Avatar
@@ -115,9 +112,8 @@ function Navbar() {
                 </div>
               )}
             </div>
-          </div>
-        )}
-      </div>
+          </div>        )}
+      </div> */}
     </div>
   );
 }

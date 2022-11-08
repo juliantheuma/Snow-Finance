@@ -14,10 +14,10 @@ import { useParams } from "react-router-dom";
 import TradingViewWidget, { Themes, BarStyles } from "react-tradingview-widget";
 import "./Stock.css";
 import Modal from "../Components/Modal";
-import { Web3Context } from "../Web3Context";
+import { Web3AuthContext, Web3Context } from "../Web3Context";
 import { tradingPlatformABI } from "../ContractsABI";
 import { tradingPlatformAddress } from "../ContractsAddresses";
-import { getMaticPrice } from "../firebase";
+import { getMaticPrice, getToken, tokenSignIn } from "../firebase";
 import handshake from "./handshake.jpg";
 import { parse } from "url";
 import Lottie from "react-lottie";
@@ -25,6 +25,7 @@ import ContractSign from "../Animations/ContractSign";
 import Signature from "../Animations/Signature";
 import Success from "../Animations/Success";
 import LoadingAnimation from "../Animations/LoadingAnimation";
+import Web3 from "web3";
 
 function Stock() {
   const { ticker } = useParams();
@@ -34,6 +35,8 @@ function Stock() {
   const [orderUnit, setOrderUnit] = useState(null);
   const [orderType, setOrderType] = useState(null);
   const web3Context = useContext(Web3Context);
+  const web3AuthContext = useContext(Web3AuthContext)
+
   const [wallet, setWallet] = useState(null);
   const [orderState, setOrderState] = useState("ordering");
   const [openTrades, setOpenTrades] = useState([]);
@@ -272,9 +275,25 @@ function Stock() {
     console.log(orderUnit);
   }, [orderUnit]);
 
+  async function handleSignIn() {
+    console.log("Signing In...");
+    const provider = await web3AuthContext.web3Auth.connect();
+    console.log(web3AuthContext.web3Auth);
+    console.log(provider);
+    let b = new Web3(web3AuthContext.web3Auth.provider);
+    let accounts = await b.eth.getAccounts();
+    web3Context.setWeb3(b);
+
+    let myAddress = accounts[0];
+
+    let token = await getToken(myAddress);
+    await tokenSignIn(token);
+  }
+
   return (
     <>
-      <div style={{ width: "100%" }} id="mobile-view">
+    {wallet &&
+      (<><div style={{ width: "100%" }} id="mobile-view">
         <div className="price">
           {stockInfo && stockInfo.name} | {ticker}
           <div
@@ -657,15 +676,14 @@ function Stock() {
           </>
         )}
         {orderState === "failed" && <h4>Txn failed. Please try again</h4>}
-      </Modal>
-      {/* {stockInfo && <div style={{border: "1px solid gray", width: "500px", borderRadius: "20px"}}>
-          <ContractSign />
-            <div style={{display: "flex", alignItems: "center", flexDirection: "column"}}>
-            <h4 style={{fontWeight: "bolder", fontSize: "1.7em"}}>Transaction Complete</h4>
-            <h4>{orderAmount + " " + stockInfo.name} shares have been added to your account</h4>
-            <button style={{marginTop: "1em",marginBottom: "1em", width: "95%", backgroundColor: "black", color: "white", borderRadius: "10px", height: "2.5em"}}>Nice!</button>
-            </div>
-          </div>} */}
+      </Modal></>)
+        }
+      {!wallet && <>
+        <div style={{height: "100vh", display: "flex", justifyContent: "center", alignItems: "center", flexDirection: "column"}}>
+          <h4 style={{marginBottom: "0.5em"}}>Please <b>Sign In</b> to access the Stock Trading Platform.</h4>
+          <Button theme="primary" text="Sign In" onClick={() => handleSignIn()} />
+        </div>
+      </>}
     </>
   );
 }

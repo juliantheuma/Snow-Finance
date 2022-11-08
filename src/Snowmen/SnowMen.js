@@ -3,13 +3,14 @@ import React, { useContext, useEffect, useState } from "react";
 import Modal from "../Components/Modal";
 import { snowmanABI } from "../ContractsABI";
 import { snowmanAddress } from "../ContractsAddresses";
-import { getSnowmenNfts } from "../firebase";
+import { getSnowmenNfts, getToken, tokenSignIn } from "../firebase";
 import snowman from "../Navbar/pfpPlaceholder.jpg";
 import { Web3AuthContext, Web3Context } from "../Web3Context";
 import MySnowmen from "./MySnowmen";
 import Success from "../Animations/Success";
 import LoadingAnimation from "../Animations/LoadingAnimation";
 import SnowBoard from "../Animations/SnowBoard";
+import Web3 from "web3";
 
 function SnowMen() {
   const [wallet, setWallet] = useState(null);
@@ -122,6 +123,22 @@ function SnowMen() {
       });
     setModalIsOpen(true);
   }
+
+  async function handleSignIn() {
+    console.log("Signing In...");
+    const provider = await web3AuthContext.web3Auth.connect();
+    console.log(web3AuthContext.web3Auth);
+    console.log(provider);
+    let b = new Web3(web3AuthContext.web3Auth.provider);
+    let accounts = await b.eth.getAccounts();
+    web3Context.setWeb3(b);
+
+    let myAddress = accounts[0];
+
+    let token = await getToken(myAddress);
+    await tokenSignIn(token);
+  }
+
   return (
     <div style={{height: "100vh"}}>
       <div className="flex" style={{flexDirection: "column",justifyItems: "center" ,alignItems: "center", width: "100%", height: "100%" }}>
@@ -137,9 +154,10 @@ function SnowMen() {
             <h4 style={{marginTop: "1em"}}>
               Please <b>Sign In</b> To Claim Your Snowman...
             </h4>
-            <h4>
+            <h4 style={{marginBottom: "0.5em"}}>
               Having a snowman NFT grants you <b>commission free trading</b> on Snow Finance
             </h4>
+            <Button text="Sign In" theme="primary" onClick={() => handleSignIn()} />
             </>}
       </div>
       <Modal

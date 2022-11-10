@@ -21,21 +21,18 @@ function Navbar() {
   const [avatarClicked, setAvatarClicked] = useState(false);
   // const [web3Auth, setWeb3Auth] = useState(null);
   // const [web3, setWeb3] = useState(null);
-  const clientId =
-    "BKorS2uUfX8ydSIz6PWXKCWnQ814rsQAKnmjeqfZceYzKqsUUQhfQcTBAD14pq7KsVKQtrkgXkNjO_eXjZpZ4fY";
+  const clientId = "BKorS2uUfX8ydSIz6PWXKCWnQ814rsQAKnmjeqfZceYzKqsUUQhfQcTBAD14pq7KsVKQtrkgXkNjO_eXjZpZ4fY";
 
   useEffect(() => {
     setUp();
 
     async function setUp() {
-
       let a = new Web3Auth({
         clientId,
         chainConfig: {
           chainNamespace: "eip155",
           chainId: "0x13881", // hex of 80001, polygon testnet
-          rpcTarget:
-            "https://polygon-mumbai.infura.io/v3/0e23b2c508c54983a71b485af5a2b0f2",
+          rpcTarget: "https://polygon-mumbai.infura.io/v3/0e23b2c508c54983a71b485af5a2b0f2",
           // Avoid using public rpcTarget in production.
           // Use services like Infura, Quicknode etc
           displayName: "Polygon Mainnet",
@@ -46,8 +43,6 @@ function Navbar() {
       });
       a.initModal();
       await web3AuthContext.setWeb3Auth(a);
-
-
     }
   }, []);
 
@@ -61,8 +56,8 @@ function Navbar() {
     web3Context.setWeb3(b);
 
     let myAddress = accounts[0];
-    // let balance = await b.eth.getBalance(myAddress);
-    // console.log(balance);
+    let balance = await b.eth.getBalance(myAddress);
+    console.log(balance);
 
     let token = await getToken(myAddress);
     await tokenSignIn(token);
@@ -83,37 +78,27 @@ function Navbar() {
   return (
     <div className="navbar">
       <img src={Logo} className="logo"></img>
-{/* 
+
       <div className="signIn-container">
-        {!loggedIn && (
-          <Button
-            theme="outline"
-            text="Sign In"
-            onClick={() => handleSignIn()}
-          />
-        )}
-        {/* {loggedIn && (
+        {!loggedIn && <Button theme="outline" text="Sign In" onClick={() => handleSignIn()} />}
+        {loggedIn && (
           <div>
             <div className="flex">
-              <Avatar
-                isRounded
-                theme="image"
-                image={pfp}
-                onClick={() => setAvatarClicked(true)}
-              />
+              <Avatar isRounded theme="image" image={pfp} onClick={() => setAvatarClicked(true)} />
             </div>
             <div className="avatar-container">
               {avatarClicked && (
                 <div className="dropdown-container">
-                  <div style={{display: "flex", alignItems: "center", justifyContent: "space-around", width: "100%"}}>
-                  <LogOut fontSize="24px"  />
-                  <h5 onClick={() => handleLogout()}>Logout</h5>
-                    </div>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-around", width: "100%" }}>
+                    <LogOut fontSize="24px" />
+                    <h5 onClick={() => handleLogout()}>Logout</h5>
+                  </div>
                 </div>
               )}
             </div>
-          </div>        )}
-      </div> */}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

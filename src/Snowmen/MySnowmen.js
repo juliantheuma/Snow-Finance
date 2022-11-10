@@ -3,11 +3,12 @@ import { Web3Context } from "../Web3Context";
 import { useContext, useEffect, useState } from "react";
 import { getSnowmenNfts } from "../firebase";
 import LoadingAnimation from "../Animations/LoadingAnimation";
+import { Link } from "react-router-dom";
 
 function MySnowmen() {
   const [wallet, setWallet] = useState(null);
   const [mySnowmen, setMySnowmen] = useState([]);
-  const [dataLoaded, setDataLoaded] = useState(false)
+  const [dataLoaded, setDataLoaded] = useState(false);
 
   const web3Context = useContext(Web3Context);
 
@@ -44,7 +45,7 @@ function MySnowmen() {
             .catch((error) => console.log("error", error));
           return getSnowmanImage(index++);
         }
-        setDataLoaded(true)
+        setDataLoaded(true);
       }
       //get Images
     }
@@ -52,7 +53,7 @@ function MySnowmen() {
   return (
     // <div style={{ borderRadius: "8px", border: "1px solid lightgray", width: "80%", height: "900px"}}>
     //   Your Snowmen
-      
+
     //   {dataLoaded && <div style={{display: "flex", overflow: "auto"}}>
     //     {mySnowmen.length > 0 &&
     //       mySnowmen.map((snowman) => (
@@ -73,20 +74,27 @@ function MySnowmen() {
     //       <img src={snowman} style={{ width: "150px" }}></img>
     //       <img src={snowman} style={{ width: "150px" }}></img> */}
     //   </div>}
-        <div>
-          <h4 style={{fontWeight: "bold", marginBottom: "0.5em"}}>Your Snowmen</h4>
-          <div style={{display: "flex", overflow: "auto"}}>
-            {
-              mySnowmen.map((snowman) => (
-                <>
-                <img src={snowman.metadata.image} style={{width: "150px", marginLeft: "0.5em", marginRight: "0.5em", borderRadius: "20px"}}></img>
-                </>
-              ))
-            }
-          </div>
-      {
-        !dataLoaded && <LoadingAnimation />
-      }
+    <div>
+      <h4 style={{ fontWeight: "bold", marginBottom: "0.5em" }}>Your Snowmen</h4>
+      <div style={{ display: "flex", overflow: "auto" }}>
+        {mySnowmen.map((snowman) => (
+          <>
+            <img src={snowman.metadata.image} style={{ width: "150px", marginLeft: "0.5em", marginRight: "0.5em", borderRadius: "20px" }}></img>
+          </>
+        ))}
+      </div>
+      {!dataLoaded && <LoadingAnimation />}
+      {dataLoaded && mySnowmen.length === 0 && (
+        <>
+          You don't own any Snowmen NFTs. Claim one for free{" "}
+          <Link to={"../snowmen"}>
+            <span style={{ textDecoration: "underline" }} onClick={() => {}}>
+              here
+            </span>
+          </Link>
+          .
+        </>
+      )}
     </div>
   );
 }

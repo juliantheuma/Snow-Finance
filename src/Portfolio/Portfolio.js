@@ -10,10 +10,8 @@ import Modal from "../Components/Modal";
 import { snowCoinABI, snowPoolABI, tradingPlatformABI } from "../ContractsABI";
 import { snowCoinAddress, snowPoolAddress, tradingPlatformAddress } from "../ContractsAddresses";
 import { deposit, getMaticPrice, getToken, tokenSignIn } from "../firebase";
-import snowman from "../Navbar/pfpPlaceholder.jpg";
 import MySnowmen from "../Snowmen/MySnowmen";
 import { Web3AuthContext, Web3Context } from "../Web3Context";
-import coinImage from "./coin.png";
 
 function Portfolio() {
   const [modalIsOpen, setModalIsOpen] = useState(false);
@@ -28,6 +26,8 @@ function Portfolio() {
   const [orderState, setOrderState] = useState(null);
   const [totalBalance, setTotalBalance] = useState(0);
   const [snowBalance, setSnowBalance] = useState(0);
+  const [stockBalance, setStockBalance] = useState(0);
+  const [unrealisedPnL, setUnrealisedPnL] = useState(0);
 
   useEffect(() => {
     loadData();
@@ -35,6 +35,9 @@ function Portfolio() {
       let accounts = await web3Context.web3.eth.getAccounts();
       console.log(accounts);
       setWallet(accounts[0]);
+      console.log(accounts[0])
+      await getTotalBalance(accounts[0]);
+
 
       let tradingContract = new web3Context.web3.eth.Contract(tradingPlatformABI, tradingPlatformAddress);
 
@@ -51,10 +54,12 @@ function Portfolio() {
           let index = 0;
 
           let maticPrice = await getMaticPrice();
+          let unrealisedPnL = 0;
 
           await getDetails();
           console.log(ordersDetails);
           setOpenTrades(ordersDetails);
+          setUnrealisedPnL(unrealisedPnL)
 
           console.log("Open Trade Details");
           console.log(openTradeDetails);
@@ -109,6 +114,13 @@ function Portfolio() {
                 parsed.profitOrLoss = profitOrLoss;
 
                 openTradeDetails.push(parsed);
+
+                if(parsed.isProfitable){
+                  unrealisedPnL += parsed.profitOrLoss;
+                }
+                else if(parsed.isProfitable === false){
+                  unrealisedPnL -= parsed.profitOrLoss;
+                }
               }
 
               // let profitAmount =
@@ -161,7 +173,6 @@ function Portfolio() {
             }
           }
         });
-      await getTotalBalance();
     }
   }, [web3Context]);
   async function getStockData(unit = "USD", ticker) {
@@ -220,54 +231,65 @@ function Portfolio() {
         setOrderState("failed");
       });
   }
-  async function getTotalBalance() {
+  async function getTotalBalance(address) {
+    console.log(address)
     let totalBalance = 0;
+    let _stockBalance = 0;
 
     //get MATIC Balance
-    let maticBalance = await web3Context.web3.eth.getBalance(wallet);
+    let maticBalance = await web3Context.web3.eth.getBalance(address);
     console.log(maticBalance);
     let maticPrice = await getMaticPrice();
     totalBalance += web3Context.web3.utils.fromWei(maticBalance) * maticPrice;
     //  Convert to USD
-    //  add to portfolio[] {value: "999.99", name: "MATIC"}
-    openTrades.forEach(async (openTrade) => {
-      console.log(openTrade.ticker);
-      console.log(openTrade);
-      let stockDetails = await getStockData("USD", openTrade.ticker);
-      totalBalance += stockDetails.ExtendedMktQuote.last * web3Context.web3.utils.fromWei(openTrade.amount);
-    });
+    //  add to portfolio[] {value: "999.99", name: "MATIC"}  
+
+
+    let index = 0;
+    await addStockBalance();
+    async function addStockBalance(){
+      if(index < openTrades.length){
+
+        let stockDetails = await getStockData("USD", openTrades[index].ticker)
+        console.log(stockDetails.ExtendedMktQuote.last * web3Context.web3.utils.fromWei(openTrades[index].amount))
+        _stockBalance += stockDetails.ExtendedMktQuote.last * web3Context.web3.utils.fromWei(openTrades[index].amount);
+        totalBalance += stockDetails.ExtendedMktQuote.last * web3Context.web3.utils.fromWei(openTrades[index].amount);
+        console.log(index)
+        index++;
+        addStockBalance()
+      }
+    }
+    // openTrades.forEach(async (openTrade) => {
+    //   console.log(openTrade.ticker);
+    //   console.log(openTrade);
+    //   let stockDetails = await getStockData("USD", openTrade.ticker);
+    //   console.log(stockDetails.ExtendedMktQuote.last * web3Context.web3.utils.fromWei(openTrade.amount))
+    //   _stockBalance += stockDetails.ExtendedMktQuote.last * web3Context.web3.utils.fromWei(openTrade.amount);
+    //   totalBalance += stockDetails.ExtendedMktQuote.last * web3Context.web3.utils.fromWei(openTrade.amount);
+    // });
+    console.log(_stockBalance)
+
+    setStockBalance(_stockBalance)
 
     let snowCoincontract = new web3Context.web3.eth.Contract(snowCoinABI, snowCoinAddress);
 
     let snowPoolContract = new web3Context.web3.eth.Contract(snowPoolABI, snowPoolAddress);
 
-    let snowBal = await snowCoincontract.methods.balanceOf(wallet).call();
+    let snowBal = await snowCoincontract.methods.balanceOf(address).call();
     snowBal = snowBal / 10 ** 18;
 
     let snowPerMatic = await snowPoolContract.methods.getSnowPerMatic().call();
     let _maticPerSnow = 1 / snowPerMatic;
 
     let snowBalInMatic = _maticPerSnow * snowBal;
-    setSnowBalance([
-      {
-        matic: snowBalInMatic,
-        usd: maticPrice * snowBalInMatic,
-      },
-    ]);
+    console.log(maticPrice * snowBalInMatic)
+    setSnowBalance(maticPrice * snowBalInMatic);
 
     totalBalance += maticPrice * snowBalInMatic;
 
     console.log(totalBalance);
     setTotalBalance(totalBalance);
-    //get Active Trades
-    //  foreach active trade
-    //    get amount * currentPrice
-    //    add to portfolio[] {value: "999.99", name: "AAPL"}
 
-    //get SNOW Balance
-    //  SNOW * MATIC / SNOW
-    //    Convert to USD
-    //    add to portfolio[] {value: "999.99", name: "SNOW"}
   }
   async function handleSignIn() {
     console.log("Signing In...");
@@ -290,7 +312,7 @@ function Portfolio() {
         <div style={{ height: "100vh", paddingTop: "2em" }}>
           <div className="p-15" style={{ width: "80%", margin: "0 auto" }}>
             <h4 style={{ fontWeight: "bold" }}>Total Funds</h4>
-            <h1 style={{ fontSize: "32px", marginBottom: "0.1em" }}>${totalBalance.toLocaleString("en-US")}</h1>
+            <h1 style={{ fontSize: "32px", marginBottom: "0.1em" }}>${(totalBalance).toLocaleString("en-US")}</h1>
             <Button
               text="+ Deposit"
               theme="secondary"
@@ -299,10 +321,10 @@ function Portfolio() {
                 // deposit100();
               }}
             />
-            <h4>Snow Coin: ${snowBalance}</h4>
-            <h4>Available Funds: ${totalBalance}</h4>
-            <h4>Open Positions: $0</h4>
-            <h4>Unrealised Profits: +$0.00</h4>
+            <h4>Available Funds: ${Math.floor((totalBalance - snowBalance + unrealisedPnL) * 1000) / 1000}</h4>
+            <h4>Open Positions: ${Math.floor(stockBalance * 1000) / 1000}</h4>
+            <h4>Unrealised P&L: {unrealisedPnL > 0 ? '+' : '-'}${Math.floor(Math.abs(unrealisedPnL) * 1000) / 1000}</h4>
+            <h4>Snow Coin: ${Math.floor(snowBalance * 1000) / 1000}</h4>
           </div>
           <div style={{ marginTop: "2em" }}>
             <div style={{ margin: "0 auto", width: "80%" }}>
@@ -351,7 +373,7 @@ function Portfolio() {
                           }}
                         >
                           {openTrade.isProfitable ? "+$" : "-$"}
-                          {Math.round(openTrade.profitOrLoss * 100) / 100}({openTrade.isProfitable ? "+" : ""}
+                          {Math.round(openTrade.profitOrLoss * 100) / 100}({openTrade.isProfitable ? "+" : "▼"}
                           {Math.round(openTrade.priceDifferencePercentage * 100) / 100}
                           %)
                         </span>

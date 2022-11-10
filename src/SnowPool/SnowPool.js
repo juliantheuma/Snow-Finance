@@ -379,7 +379,7 @@ function SnowPool() {
                       }}
                     >
                       <h6 style={{ color: "#15538a", fontWeight: "bold", textAlign: "center" }}>Your Share</h6>
-                      <h5 style={{ color: "white", fontWeight: "500", textAlign: "center" }}>{(snowBalance / snowSupply) * 100}%</h5>
+                      <h5 style={{ color: "white", fontWeight: "500", textAlign: "center" }}>{((snowBalance / snowSupply) * 100).toLocaleString("en-US")}%</h5>
                     </div>
                     <div
                       className="card"
@@ -404,8 +404,8 @@ function SnowPool() {
                         marginRight: "1em",
                       }}
                     >
-                      <h6 style={{ color: "white", fontWeight: "bold", textAlign: "center" }}>SNOW/MATIC</h6>
-                      <h5 style={{ color: "#a9c9e6", fontWeight: "500", textAlign: "center" }}>{parseInt(snowPerMatic).toLocaleString("en-US")}</h5>
+                      <h6 style={{ color: "white", fontWeight: "bold", textAlign: "center" }}>Maximum Claim</h6>
+                      <h5 style={{ color: "#a9c9e6", fontWeight: "500", textAlign: "center" }}>{Math.floor((snowBalance / snowSupply) * fundsInContract * 1000) / 1000} MATIC</h5>
                     </div>
                     <div
                       className="card"

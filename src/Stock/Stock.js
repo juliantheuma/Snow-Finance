@@ -58,10 +58,14 @@ function Stock() {
 
         let stockPriceInMatic = await getStockData("MATIC");
         let maticPrice = await getMaticPrice();
+        let openTradeDetails = [];
+        let unrealisedPnL = 0;
+        let tradeHistoryDetails = [];
+
 
         await getDetails();
         console.log(ordersDetails);
-        setOpenTrades(ordersDetails);
+        setOpenTrades(openTradeDetails);
 
         async function getDetails() {
           if (index !== orders.length) {
@@ -70,43 +74,97 @@ function Stock() {
             let details = await tradingContract.methods.orderDetails(orders[index]).call();
 
             console.log(details);
+            let stockPriceInMatic = await getStockData("MATIC", details.ticker);
 
-            if (details.settled === false && details.ticker === ticker) {
-              let parsed = {};
-              parsed.amount = details.quantity;
-              parsed.price = details.price;
-              parsed.type = details.longOrShort;
-              parsed.investment = details.investment;
-              parsed.id = orders[index];
+            let parsed = {};
+            parsed.amount = details.quantity;
+            parsed.price = details.price;
+            parsed.type = details.longOrShort;
+            parsed.investment = details.investment;
+            parsed.id = orders[index];
+            parsed.settled = orders.settled;
+            parsed.ticker = details.ticker;
 
-              console.log(parsed);
+            console.log(parsed);
 
-              let profitAmount = web3Context.web3.utils.fromWei(parsed.amount) * stockPriceInMatic - web3Context.web3.utils.fromWei(parsed.investment);
+            if (parsed.settled !== true) {
+              let tickerData = await getStockData("MATIC", parsed.ticker);
+              let lastPrice = tickerData;
+              let purchasePrice = web3Context.web3.utils.fromWei(parsed.price);
 
-              profitAmount = profitAmount * maticPrice;
+              let priceDifferenceInMatic = Math.abs(purchasePrice - lastPrice);
+              let priceDifferencePercentage = Math.abs((priceDifferenceInMatic * 100) / purchasePrice);
 
-              console.log(web3Context.web3.utils.fromWei(parsed.price));
+              let maticPrice = await getMaticPrice();
+              let priceDifferenceInUsd = priceDifferenceInMatic * maticPrice;
 
-              let profitType = profitAmount >= 0 ? "PROFIT" : "LOSS";
-              let profitPercentage = (parseFloat(profitAmount) * 100) / web3Context.web3.utils.fromWei(parsed.investment);
+              let profitOrLoss = Math.abs(priceDifferenceInUsd * web3Context.web3.utils.fromWei(parsed.amount));
 
-              console.log("$" + profitAmount);
-              console.log(web3Context.web3.utils.fromWei(parsed.investment));
-
-              if (parsed.type === "SHORT" && web3Context.web3.utils.fromWei(parsed.price) < maticPrice * stockPriceInMatic) {
-                profitAmount *= -1;
-                profitPercentage *= -1;
-                profitType = "LOSS";
+              if ((parsed.type === "LONG" && lastPrice > purchasePrice) || (parsed.type === "SHORT" && lastPrice < purchasePrice)) {
+                parsed.isProfitable = true;
+              } else {
+                parsed.isProfitable = false;
               }
+              parsed.priceDifferenceInMatic = priceDifferenceInMatic;
+              parsed.priceDifferenceInUsd = priceDifferenceInUsd;
+              parsed.priceDifferencePercentage = priceDifferencePercentage;
+              parsed.profitOrLoss = profitOrLoss;
 
-              parsed.profitAndLoss = {
-                type: profitType,
-                amount: profitAmount,
-                percentage: profitPercentage,
-              };
+              openTradeDetails.push(parsed);
 
-              ordersDetails.push(parsed);
+              if(parsed.isProfitable){
+                unrealisedPnL += parsed.profitOrLoss;
+              }
+              else if(parsed.isProfitable === false){
+                unrealisedPnL -= parsed.profitOrLoss;
+              }
             }
+
+            // let profitAmount =
+            //   web3Context.web3.utils.fromWei(parsed.amount) *
+            //     stockPriceInMatic -
+            //   web3Context.web3.utils.fromWei(parsed.investment);
+
+            // profitAmount = profitAmount * maticPrice;
+
+            // console.log("bought at: ",web3Context.web3.utils.fromWei(parsed.price) + "MATIC");
+
+            // console.log("price now: ",stockPriceInMatic + "MATIC")
+
+            // let profitPercentage = 100 * (web3Context.web3.utils.fromWei(parsed.price) - stockPriceInMatic) / web3Context.web3.utils.fromWei(parsed.price)
+
+            // let profitType = profitAmount >= 0 ? "PROFIT" : "LOSS";
+            // let profitPercentage1 =
+            //   (parseFloat(profitAmount) * 100) /
+            //   web3Context.web3.utils.fromWei(parsed.investment);
+
+            // console.log("$" + profitAmount);
+            // console.log(profitPercentage + "%")
+            // console.log(web3Context.web3.utils.fromWei(parsed.investment));
+
+            // if (
+            //   parsed.type === "SHORT" &&
+            //   web3Context.web3.utils.fromWei(parsed.price) <
+            //     maticPrice * stockPriceInMatic
+            // ) {
+            //   profitAmount *= -1;
+            //   profitPercentage *= -1;
+            //   profitType = "LOSS";
+            // }
+
+            // parsed.profitAndLoss = {
+            //   type: profitType,
+            //   amount: profitAmount,
+            //   percentage: profitPercentage,
+            // };
+            // if (details.settled == false) {
+            //   openTradeDetails.push(parsed);
+            // } else if (details.settled === true) {
+            //   parsed.profitAndLoss = null;
+            // }
+            // console.log(parsed)
+            // if(parsed.profitAndLoss && parsed.profitAndLoss.type === "LOSS"){parsed.profitAndLoss.percentage *= -1}
+            tradeHistoryDetails.push(parsed);
             index++;
             return getDetails();
           }
@@ -444,7 +502,7 @@ function Stock() {
                       >
                         {web3Context && Math.round(web3Context.web3.utils.fromWei(openTrade.amount) * 100) / 100 + " " + ticker}
                         <Tag
-                          color={openTrade.type === "LONG" ? "green" : "red"}
+                          color={openTrade.isProfitable === "LONG" ? "green" : "red"}
                           onCancelClick={function noRefCheck() {}}
                           text={openTrade.type}
                           tone="dark"
@@ -452,12 +510,12 @@ function Stock() {
                         />
                         <span
                           style={{
-                            color: openTrade.profitAndLoss.type === "PROFIT" ? "green" : "red",
+                            color: openTrade.isProfitable ? "green" : "red",
                           }}
                         >
-                          {openTrade.profitAndLoss.type === "PROFIT" ? "+$" : "-$"}
-                          {Math.round(openTrade.profitAndLoss.amount * 100) / 100}({openTrade.profitAndLoss.type === "PROFIT" ? "+" : ""}
-                          {Math.round(openTrade.profitAndLoss.percentage * 100) / 100}
+                          {openTrade.isProfitable ? "+$" : "-$"}
+                          {Math.round(openTrade.profitOrLoss * 100) / 100}({openTrade.isProfitable ? "+" : ""}
+                          {openTrade.priceDifferencePercentage == Infinity ? '0.00' :Math.round(openTrade.priceDifferencePercentage * 100) / 100}
                           %)
                         </span>
                         <Button

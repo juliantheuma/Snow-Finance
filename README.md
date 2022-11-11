@@ -125,30 +125,12 @@ This is a test credit card.
 
 6. Login to your account again and funds should be added to your account
 
-7. Enter **TEST_A** in the search bar, and click the search icon
+7. Type in a stock you would like to order and click the search icon.
 
-8. Place a **Long** order on TEST_A stocks for the dollar amount you would like.
-Note: 1 TEST_A stock = $200
+8. Fill in the middle section form to place an order on the stock
 
 9. Wait for the order to be processed.
-Note: This might take up to 5 minutes.
-
-10. **Close** your trade
-Note: on selling, TEST_A stock is equivalent to $400
-
-11. You should receive **100%** profit on your order amount
-
-12. There is a **0.25% commission** if you don't hold a Snowman NFT
-
-13. Select the Snowmen Tab
-
-14. Claim your free Snowman NFT
-
-15. repeat steps 7 - 10
-
-16. You Should receive exactly double the amount you invested in stock A, without commission being reduced.
-
-
+Note: This might take a while, due to the Chainlink testnet oracle
 
 
 ## Installation

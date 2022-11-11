@@ -86,7 +86,7 @@ function SnowPool() {
   }, wallet);
 
   useEffect(() => {
-    const q = query(collection(db, "moralis/events/Snowcoin"));
+    const q = query(collection(db, "moralis/events/SnowcoinTransfers"));
     onSnapshot(q, (querySnapshot) => {
       const tempTxs = [];
       querySnapshot.forEach((doc) => {
@@ -405,7 +405,9 @@ function SnowPool() {
                       }}
                     >
                       <h6 style={{ color: "white", fontWeight: "bold", textAlign: "center" }}>Maximum Claim</h6>
-                      <h5 style={{ color: "#a9c9e6", fontWeight: "500", textAlign: "center" }}>{Math.floor((snowBalance / snowSupply) * fundsInContract * 1000) / 1000} MATIC</h5>
+                      <h5 style={{ color: "#a9c9e6", fontWeight: "500", textAlign: "center" }}>
+                        {Math.floor((snowBalance / snowSupply) * fundsInContract * 1000) / 1000} MATIC
+                      </h5>
                     </div>
                     <div
                       className="card"

@@ -16,6 +16,7 @@ import Signature from "../Animations/Signature";
 import Success from "../Animations/Success";
 import LoadingAnimation from "../Animations/LoadingAnimation";
 import Web3 from "web3";
+import CancelAnimation from "../Animations/CancelAnimation";
 
 function Stock() {
   const { ticker } = useParams();
@@ -61,7 +62,6 @@ function Stock() {
         let openTradeDetails = [];
         let unrealisedPnL = 0;
         let tradeHistoryDetails = [];
-
 
         await getDetails();
         console.log(ordersDetails);
@@ -112,10 +112,9 @@ function Stock() {
 
               openTradeDetails.push(parsed);
 
-              if(parsed.isProfitable){
+              if (parsed.isProfitable) {
                 unrealisedPnL += parsed.profitOrLoss;
-              }
-              else if(parsed.isProfitable === false){
+              } else if (parsed.isProfitable === false) {
                 unrealisedPnL -= parsed.profitOrLoss;
               }
             }
@@ -334,9 +333,9 @@ function Stock() {
                 <div className="card">
                   <h4 style={{ color: "blue" }}>Today's Change</h4>
                   <h6>
-                    {stockInfo && stockInfo.ExtendedMktQuote.change}
+                    {stockInfo && stockInfo.ExtendedMktQuote && stockInfo.ExtendedMktQuote.change}
                     {"  ("}
-                    {stockInfo && stockInfo.ExtendedMktQuote.change_pct})
+                    {stockInfo && stockInfo.ExtendedMktQuote && stockInfo.ExtendedMktQuote.change_pct})
                   </h6>
                 </div>
 
@@ -360,7 +359,8 @@ function Stock() {
             </div>
 
             <div style={{ width: "100%" }}>
-              <TradingViewWidget symbol={"NASDAQ:" + ticker} theme={Themes.LIGHT} BarStyles="3" width="100%" />
+              {ticker !== "TEST_A" && <TradingViewWidget symbol={"NASDAQ:" + ticker} theme={Themes.LIGHT} BarStyles="3" width="100%" />}
+              {ticker === "TEST_A" && <>This is a test stock</>}
             </div>
 
             <TabList defaultActiveKey={1} onChange={function noRefCheck() {}} tabStyle="bar">
@@ -396,9 +396,9 @@ function Stock() {
                   <div className="card" style={{ backgroundColor: "#a9c9e6", textAlign: "center", marginRight: "0.5em" }}>
                     <h4 style={{ color: "#15538a", fontWeight: "bold", textAlign: "center" }}>Today's Change</h4>
                     <h6 style={{ color: "white", fontWeight: "500", textAlign: "center" }}>
-                      {stockInfo && stockInfo.ExtendedMktQuote.change}
+                      {stockInfo && stockInfo.ExtendedMktQuote && stockInfo.ExtendedMktQuote.change}
                       {"  ("}
-                      {stockInfo && stockInfo.ExtendedMktQuote.change_pct})
+                      {stockInfo && stockInfo.ExtendedMktQuote && stockInfo.ExtendedMktQuote.change_pct})
                     </h6>
                   </div>
 
@@ -515,7 +515,7 @@ function Stock() {
                         >
                           {openTrade.isProfitable ? "+$" : "-$"}
                           {Math.round(openTrade.profitOrLoss * 100) / 100}({openTrade.isProfitable ? "+" : ""}
-                          {openTrade.priceDifferencePercentage == Infinity ? '0.00' :Math.round(openTrade.priceDifferencePercentage * 100) / 100}
+                          {openTrade.priceDifferencePercentage == Infinity ? "0.00" : Math.round(openTrade.priceDifferencePercentage * 100) / 100}
                           %)
                         </span>
                         <Button
@@ -530,7 +530,7 @@ function Stock() {
                         />
                       </div>
                     ))}
-                  {openTrades.length === 0 && <h4>You currently don't have any open {ticker} orders.</h4>}
+                  {openTrades.length === 0 && <h4 style={{ textAlign: "center" }}>You currently don't have any open {ticker} orders.</h4>}
                 </div>
               </div>
             </div>
@@ -544,7 +544,7 @@ function Stock() {
               loadData();
             }}
           >
-            {orderState === "ordering" && (
+            {orderState === "ordering" && ticker !== "TEST_A" && (
               <div>
                 <h4 style={{ color: "#195289", fontSize: "1.5em", marginBottom: "0.75em" }}>
                   <b>Are You Sure You Want To Place This Order?</b>
@@ -563,13 +563,83 @@ function Stock() {
                   </div>
                   <div style={{ display: "flex", color: "#5c86ac" }}>
                     <span>{ticker} Price:</span>
-                    <span style={{ marginLeft: "auto", color: "#5c86ac" }}>${stockInfo && stockInfo.ExtendedMktQuote.last}</span>
+                    <span style={{ marginLeft: "auto", color: "#5c86ac" }}>${stockInfo && stockInfo.ExtendedMktQuote && stockInfo.ExtendedMktQuote.last}</span>
                   </div>
                   <div style={{ display: "flex", color: "#5c86ac" }}>
                     <span>Amount:</span>
                     {stockInfo && (
                       <span style={{ marginLeft: "auto", color: "#5c86ac" }}>
-                        {orderUnit === ticker ? orderAmount : Math.round((orderAmount * 1000) / stockInfo.ExtendedMktQuote.last) / 1000} shares
+                        {orderUnit === ticker || !(stockInfo && stockInfo.ExtendedMktQuote && stockInfo.ExtendedMktQuote.last)
+                          ? orderAmount
+                          : Math.round((orderAmount * 1000) / stockInfo.ExtendedMktQuote.last) / 1000}{" "}
+                        shares
+                      </span>
+                    )}
+                  </div>
+                  <div
+                    style={{
+                      display: "flex",
+                      borderTop: "0.5px solid gray",
+                      marginTop: "1em",
+                      paddingTop: "0.5em",
+                      color: "#5c86ac",
+                    }}
+                  >
+                    <span>
+                      <b>Total Price:</b>
+                    </span>
+                    {stockInfo && (
+                      <span style={{ marginLeft: "auto", color: "#5c86ac" }}>
+                        <b>${orderUnit === ticker ? (orderAmount * stockInfo.ExtendedMktQuote.last).toLocaleString("en-US") : orderAmount}</b>
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "center",
+                    marginTop: "0.5em",
+                  }}
+                >
+                  <Button
+                    text="Confirm"
+                    theme="primary"
+                    onClick={() => {
+                      handleOrder();
+                      setOrderState("sign");
+                    }}
+                  ></Button>
+                  <Button text="Cancel" theme="secondary" onClick={() => {}} />
+                </div>
+              </div>
+            )}
+            {orderState === "ordering" && ticker === "TEST_A" && (
+              <div>
+                <h4 style={{ color: "#195289", fontSize: "1.5em", marginBottom: "0.75em" }}>
+                  <b>Are You Sure You Want To Place This Order?</b>
+                </h4>
+                <div
+                  style={{
+                    width: "70%",
+                    margin: "0 auto",
+                    marginTop: "1em",
+                    marginBottom: "1em",
+                  }}
+                >
+                  <div style={{ display: "flex", color: "#5c86ac" }}>
+                    <span>Type:</span>
+                    <span style={{ marginLeft: "auto", color: "#5c86ac" }}>{orderType === "LONG" ? "LONG" : "SHORT"}</span>
+                  </div>
+                  <div style={{ display: "flex", color: "#5c86ac" }}>
+                    <span>{ticker} Price:</span>
+                    <span style={{ marginLeft: "auto", color: "#5c86ac" }}>$200</span>
+                  </div>
+                  <div style={{ display: "flex", color: "#5c86ac" }}>
+                    <span>Amount:</span>
+                    {stockInfo && (
+                      <span style={{ marginLeft: "auto", color: "#5c86ac" }}>
+                        {orderUnit === ticker ? orderAmount : Math.round((orderAmount * 1000) / 200) / 1000} shares
                       </span>
                     )}
                   </div>
@@ -637,10 +707,16 @@ function Stock() {
                 </div>
               </>
             )}
-            {orderState === "sign" && (
+            {orderState === "sign" && web3AuthContext && web3AuthContext.web3Auth && web3AuthContext.web3Auth.connectedAdapterName !== "openlogin" && (
               <>
                 <Signature />
                 <h4>Please Sign the tx.</h4>
+              </>
+            )}
+            {orderState === "sign" && web3AuthContext && web3AuthContext.web3Auth && web3AuthContext.web3Auth.connectedAdapterName === "openlogin" && (
+              <>
+                <LoadingAnimation />
+                <h4>Your Order Is On Its Way!</h4>
               </>
             )}
             {orderState === "pending" && (
@@ -658,7 +734,8 @@ function Stock() {
             )}
             {orderState === "failed" && (
               <>
-                <h4>Txn failed. Please try again</h4>
+                <CancelAnimation />
+                <h4>Oops, Something went wrong. Please try again.</h4>
               </>
             )}
           </Modal>

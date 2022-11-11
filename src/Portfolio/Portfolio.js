@@ -35,9 +35,8 @@ function Portfolio() {
       let accounts = await web3Context.web3.eth.getAccounts();
       console.log(accounts);
       setWallet(accounts[0]);
-      console.log(accounts[0])
+      console.log(accounts[0]);
       await getTotalBalance(accounts[0]);
-
 
       let tradingContract = new web3Context.web3.eth.Contract(tradingPlatformABI, tradingPlatformAddress);
 
@@ -59,7 +58,7 @@ function Portfolio() {
           await getDetails();
           console.log(ordersDetails);
           setOpenTrades(ordersDetails);
-          setUnrealisedPnL(unrealisedPnL)
+          setUnrealisedPnL(unrealisedPnL);
 
           console.log("Open Trade Details");
           console.log(openTradeDetails);
@@ -115,10 +114,9 @@ function Portfolio() {
 
                 openTradeDetails.push(parsed);
 
-                if(parsed.isProfitable){
+                if (parsed.isProfitable) {
                   unrealisedPnL += parsed.profitOrLoss;
-                }
-                else if(parsed.isProfitable === false){
+                } else if (parsed.isProfitable === false) {
                   unrealisedPnL -= parsed.profitOrLoss;
                 }
               }
@@ -232,7 +230,7 @@ function Portfolio() {
       });
   }
   async function getTotalBalance(address) {
-    console.log(address)
+    console.log(address);
     let totalBalance = 0;
     let _stockBalance = 0;
 
@@ -242,21 +240,19 @@ function Portfolio() {
     let maticPrice = await getMaticPrice();
     totalBalance += web3Context.web3.utils.fromWei(maticBalance) * maticPrice;
     //  Convert to USD
-    //  add to portfolio[] {value: "999.99", name: "MATIC"}  
-
+    //  add to portfolio[] {value: "999.99", name: "MATIC"}
 
     let index = 0;
     await addStockBalance();
-    async function addStockBalance(){
-      if(index < openTrades.length){
-
-        let stockDetails = await getStockData("USD", openTrades[index].ticker)
-        console.log(stockDetails.ExtendedMktQuote.last * web3Context.web3.utils.fromWei(openTrades[index].amount))
+    async function addStockBalance() {
+      if (index < openTrades.length) {
+        let stockDetails = await getStockData("USD", openTrades[index].ticker);
+        console.log(stockDetails.ExtendedMktQuote.last * web3Context.web3.utils.fromWei(openTrades[index].amount));
         _stockBalance += stockDetails.ExtendedMktQuote.last * web3Context.web3.utils.fromWei(openTrades[index].amount);
         totalBalance += stockDetails.ExtendedMktQuote.last * web3Context.web3.utils.fromWei(openTrades[index].amount);
-        console.log(index)
+        console.log(index);
         index++;
-        addStockBalance()
+        addStockBalance();
       }
     }
     // openTrades.forEach(async (openTrade) => {
@@ -267,9 +263,9 @@ function Portfolio() {
     //   _stockBalance += stockDetails.ExtendedMktQuote.last * web3Context.web3.utils.fromWei(openTrade.amount);
     //   totalBalance += stockDetails.ExtendedMktQuote.last * web3Context.web3.utils.fromWei(openTrade.amount);
     // });
-    console.log(_stockBalance)
+    console.log(_stockBalance);
 
-    setStockBalance(_stockBalance)
+    setStockBalance(_stockBalance);
 
     let snowCoincontract = new web3Context.web3.eth.Contract(snowCoinABI, snowCoinAddress);
 
@@ -282,14 +278,13 @@ function Portfolio() {
     let _maticPerSnow = 1 / snowPerMatic;
 
     let snowBalInMatic = _maticPerSnow * snowBal;
-    console.log(maticPrice * snowBalInMatic)
+    console.log(maticPrice * snowBalInMatic);
     setSnowBalance(maticPrice * snowBalInMatic);
 
     totalBalance += maticPrice * snowBalInMatic;
 
     console.log(totalBalance);
     setTotalBalance(totalBalance);
-
   }
   async function handleSignIn() {
     console.log("Signing In...");
@@ -311,8 +306,70 @@ function Portfolio() {
       {wallet && (
         <div style={{ height: "100vh", paddingTop: "2em" }}>
           <div className="p-15" style={{ width: "80%", margin: "0 auto" }}>
-            <h4 style={{ fontWeight: "bold" }}>Total Funds</h4>
-            <h1 style={{ fontSize: "32px", marginBottom: "0.1em" }}>${(totalBalance).toLocaleString("en-US")}</h1>
+            <h4 style={{ fontWeight: "bold" }}>Portfolio Value</h4>
+            <h1 style={{ fontSize: "32px", marginBottom: "0.1em" }}>${totalBalance.toLocaleString("en-US")}</h1>
+
+            <div style={{ display: "flex", marginBottom: "0.5em" }}>
+              <div
+                style={{
+                  marginRight: "1em",
+                  backgroundColor: "white",
+                  borderRadius: "8px",
+                  padding: "1em",
+                  boxShadow: "1.5px 1.5px 1.5px 1.5px rgba(0,0,0,0.2)",
+                }}
+              >
+                <h4>
+                  <b>Available Funds</b>
+                </h4>
+                <h4>${Math.floor((totalBalance - snowBalance + unrealisedPnL) * 1000) / 1000}</h4>
+              </div>
+              <div
+                style={{
+                  marginRight: "1em",
+                  backgroundColor: "white",
+                  borderRadius: "8px",
+                  padding: "1em",
+                  boxShadow: "1.5px 1.5px 1.5px 1.5px rgba(0,0,0,0.2)",
+                }}
+              >
+                <h4>
+                  <b>Open Positions</b>
+                </h4>
+                <h4> ${Math.floor(stockBalance * 1000) / 1000}</h4>
+              </div>
+              <div
+                style={{
+                  marginRight: "1em",
+                  backgroundColor: "white",
+                  borderRadius: "8px",
+                  padding: "1em",
+                  boxShadow: "1.5px 1.5px 1.5px 1.5px rgba(0,0,0,0.2)",
+                }}
+              >
+                <h4>
+                  <b>Unrealised P&L</b>
+                </h4>
+                <h4>
+                  {" "}
+                  {unrealisedPnL > 0 ? "+" : "-"}${Math.floor(Math.abs(unrealisedPnL) * 1000) / 1000}
+                </h4>
+              </div>
+              <div
+                style={{
+                  marginRight: "1em",
+                  backgroundColor: "white",
+                  borderRadius: "8px",
+                  padding: "1em",
+                  boxShadow: "1.5px 1.5px 1.5px 1.5px rgba(0,0,0,0.2)",
+                }}
+              >
+                <h4>
+                  <b>Snow Coin</b>
+                </h4>
+                <h4> ${Math.floor(snowBalance * 1000) / 1000}</h4>
+              </div>
+            </div>
             <Button
               text="+ Deposit"
               theme="secondary"
@@ -321,10 +378,6 @@ function Portfolio() {
                 // deposit100();
               }}
             />
-            <h4>Available Funds: ${Math.floor((totalBalance - snowBalance + unrealisedPnL) * 1000) / 1000}</h4>
-            <h4>Open Positions: ${Math.floor(stockBalance * 1000) / 1000}</h4>
-            <h4>Unrealised P&L: {unrealisedPnL > 0 ? '+' : '-'}${Math.floor(Math.abs(unrealisedPnL) * 1000) / 1000}</h4>
-            <h4>Snow Coin: ${Math.floor(snowBalance * 1000) / 1000}</h4>
           </div>
           <div style={{ marginTop: "2em" }}>
             <div style={{ margin: "0 auto", width: "80%" }}>

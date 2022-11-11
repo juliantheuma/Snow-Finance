@@ -4,13 +4,14 @@ import Modal from "../Components/Modal";
 import { snowmanABI } from "../ContractsABI";
 import { snowmanAddress } from "../ContractsAddresses";
 import { getSnowmenNfts, getToken, tokenSignIn } from "../firebase";
-import snowman from "../Navbar/pfpPlaceholder.jpg";
+import snowman from "./pfp.png";
 import { Web3AuthContext, Web3Context } from "../Web3Context";
 import MySnowmen from "./MySnowmen";
 import Success from "../Animations/Success";
 import LoadingAnimation from "../Animations/LoadingAnimation";
 import SnowBoard from "../Animations/SnowBoard";
 import Web3 from "web3";
+import CancelAnimation from "../Animations/CancelAnimation";
 
 function SnowMen() {
   const [wallet, setWallet] = useState(null);
@@ -132,7 +133,7 @@ function SnowMen() {
   return (
     <div style={{ height: "100vh" }}>
       <div className="flex" style={{ flexDirection: "column", justifyItems: "center", alignItems: "center", width: "100%", height: "100%" }}>
-        <img src={snowman} style={{ width: "150px" }}></img>
+        <img src={snowman} style={{ width: "150px", borderRadius: "10%" }}></img>
         {wallet ? (
           <>
             <h4>
@@ -202,7 +203,12 @@ function SnowMen() {
             </div>
           </>
         )}
-        {orderState === "failed" && <>Something went wrong. Your Snowman couldn't find you</>}
+        {orderState === "failed" && (
+          <>
+            <CancelAnimation />
+            Something went wrong. Your Snowman couldn't find you
+          </>
+        )}
         {orderState === "reveal" && mintedToken && (
           <>
             <div style={{ display: "flex", justifyContent: "end" }}>

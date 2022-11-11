@@ -75,7 +75,7 @@ function MySnowmen() {
     //       <img src={snowman} style={{ width: "150px" }}></img> */}
     //   </div>}
     <div>
-      <h4 style={{ fontWeight: "bold", marginBottom: "0.5em" }}>Your Snowmen</h4>
+      <h4 style={{ fontWeight: "bold", marginBottom: "0.5em" }}>{mySnowmen && mySnowmen.length > 1 ? 'Your Snowmen' : 'Your Snowman'}</h4>
       <div style={{ display: "flex", overflow: "auto" }}>
         {mySnowmen.map((snowman) => (
           <>

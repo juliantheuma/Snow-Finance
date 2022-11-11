@@ -86,7 +86,7 @@ function SnowPool() {
   }, wallet);
 
   useEffect(() => {
-    const q = query(collection(db, "moralis/events/SnowcoinTransfers"));
+    const q = query(collection(db, "moralis/events/Snowcointransfers"));
     onSnapshot(q, (querySnapshot) => {
       const tempTxs = [];
       querySnapshot.forEach((doc) => {
@@ -386,7 +386,7 @@ function SnowPool() {
                       style={{ backgroundColor: "#195289", textAlign: "center", marginTop: "0.5em", marginBottom: "0.5em", width: "50%", aspectRatio: "1 / 1" }}
                     >
                       <h6 style={{ color: "white", fontWeight: "bold", textAlign: "center" }}>Funds In Vault</h6>
-                      <h5 style={{ color: "#a9c9e6", fontWeight: "500", textAlign: "center" }}>{Math.floor(fundsInContract * 100) / 100} MATIC</h5>
+                      <h5 style={{ color: "#a9c9e6", fontWeight: "500", textAlign: "center" }}>{Math.floor(fundsInContract * 1000) / 1000} MATIC</h5>
                     </div>
                   </div>
 
@@ -487,8 +487,8 @@ function SnowPool() {
                   </h4>
                   {type === "Withdraw" ? (
                     <>
-                      <h4>Funds have been deposited to your account</h4>
-                      <h4>You have burnt {amount} SNOW Coins</h4>
+                      <h4>Funds have been deposited to your account.</h4>
+                      <h4>You have traded {amount} SNOW Coins</h4>
                     </>
                   ) : (
                     <h4>

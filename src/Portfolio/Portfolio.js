@@ -32,6 +32,7 @@ function Portfolio() {
   useEffect(() => {
     loadData();
     async function loadData() {
+      console.log(web3Context)
       let accounts = await web3Context.web3.eth.getAccounts();
       console.log(accounts);
       setWallet(accounts[0]);
@@ -357,7 +358,7 @@ function Portfolio() {
               </div>
               <div
                 style={{
-                  marginRight: "1em",
+                  paddingRight: "3.5em",
                   backgroundColor: "white",
                   borderRadius: "8px",
                   padding: "1em",
@@ -426,9 +427,7 @@ function Portfolio() {
                           }}
                         >
                           {openTrade.isProfitable ? "+$" : "-$"}
-                          {Math.round(openTrade.profitOrLoss * 100) / 100}({openTrade.isProfitable ? "+" : "▼"}
-                          {Math.round(openTrade.priceDifferencePercentage * 100) / 100}
-                          %)
+                          {Math.round(openTrade.profitOrLoss * 100) / 100}
                         </span>
                       </div>
                       <div style={{ width: "25%", display: "flex", justifyContent: "center" }}>
@@ -545,11 +544,17 @@ function Portfolio() {
                 </div>
               </>
             )}
-            {orderState === "sign" && (
+            {orderState === "sign" && web3AuthContext.web3Auth && web3AuthContext.web3Auth.connectedAdapterName !== "openlogin" && (
               <>
                 <Signature />
                 <h4>Please Sign the tx.</h4>
               </>
+            )}
+            {orderState === "sign" && web3AuthContext.web3Auth && web3AuthContext.web3Auth.connectedAdapterName === "openlogin" && (
+              <>
+              <LoadingAnimation />
+              <h4>Your Order Is Being Closed!</h4>
+            </>
             )}
             {orderState === "pending" && (
               <>

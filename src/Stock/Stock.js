@@ -488,7 +488,7 @@ function Stock() {
               </div>
               <div className="card trades">
                 <b>Your Active {stockInfo && stockInfo.name} Trades</b>
-                <div>
+                <div style={{width: "100%", marginTop: "0.5em"}}>
                   {openTrades.length > 0 &&
                     openTrades.map((openTrade) => (
                       <div
@@ -514,9 +514,7 @@ function Stock() {
                           }}
                         >
                           {openTrade.isProfitable ? "+$" : "-$"}
-                          {Math.round(openTrade.profitOrLoss * 100) / 100}({openTrade.isProfitable ? "+" : ""}
-                          {openTrade.priceDifferencePercentage == Infinity ? "0.00" : Math.round(openTrade.priceDifferencePercentage * 100) / 100}
-                          %)
+                          {Math.round(openTrade.profitOrLoss * 100) / 100}
                         </span>
                         <Button
                           text="close"
@@ -686,14 +684,14 @@ function Stock() {
                 <h4 style={{ marginBottom: "1em" }}>
                   <b>Are you sure you want to close this trade?</b>
                 </h4>
-                <h4>Transaction ID: {closingTrade.id}</h4>
+                {/* <h4>Transaction ID: {closingTrade.id}</h4>
                 <h4>
                   Amount: {web3Context.web3.utils.fromWei(closingTrade.amount)} {stockInfo && stockInfo.name}
                 </h4>
                 <h4>
-                  Profit And Loss: ${closingTrade.profitAndLoss.amount} ({closingTrade.profitAndLoss.type === "PROFIT" ? "+" : "-"}
-                  {Math.round(closingTrade.profitAndLoss.percentage * 100) / 100}%)
-                </h4>
+                  Profit And Loss: ${closingTrade.profitOrLoss} ({closingTrade.isProfitable ? "+" : "-"}
+                  {Math.round(closingTrade.priceDifferencePercentage * 100) / 100}%)
+                </h4> */}
                 <div style={{ display: "flex" }}>
                   <Button
                     theme="primary"

@@ -1,7 +1,7 @@
 
 # Snow Finance
 
-A decentralized stock trading platform
+A decentralized stock trading platform.
 
 
 ## About
@@ -26,6 +26,20 @@ Snow Finance also demonstrates other aspects of deFi through its **Snow Vault** 
 - Limited supply Snowmen NFTs provide **commission free trading**
 - **Circular Liquidity flow** through SNOW Coin, Snow Vault and the Stock Trading Platform
 
+## Stock Trading Platform Mechanics
+
+The stock trading platform is based on the contracts for difference (CFD) model. The trader places an order at a given price, and when closing the trade, the price difference is settled. 
+If the trade is profitable for the trader, funds are sent to his wallet. 
+
+If the trade is not profitable, funds are sent to the Snow Vault.
+
+```bash
+transferValue = priceDifference * amountOfShares
+```
+
+The trader also pays a 0.25% commission on closing a trade, which is transferred to the Snow Vault.
+
+Snow Finance utilises ChainLink's 'Connect To Any API' to get stock price data onto the blockchain.
 
 ## Snow Vault and SNOW Coin
 
@@ -72,6 +86,7 @@ With a **limited supply** of Snowmen NFTs (Currently at 100 Snowmen on the Mumba
 Snowmen NFTs are transferrable and its holder has full control over it. He may hold it to enjoy commission free trading, sell it to high frequency trader or gift it to a friend.
 
 Snowmen NFTs royalties from OpenSea also are transferred into the Snow Vault, furtherly adding liquidity to the platform.
+
 ## Tech Stack
 
 - Moralis
@@ -153,30 +168,16 @@ Note: This might take a while, due to the Chainlink testnet oracle
     npm start
 ```
 
-**To deploy and test the smart contracts**:
-1. Find the contracts in /contracts
-2. Copy each contract into Remix
-3. Compile the contracts using solidity 0.8.17
-4. Deploy the contracts to the Mumbai network
-5. Call the following functions: 
-```bash
-    setSnowmenAddress(address)
-    setSnowPoolAddress(address)
+## Next Steps
+    
+    1. Snow Finance plans to make use of Chainlink Automation to include Limit Orders, Take Profits and Stop Losses.
+    
+    2. Utilising Chainlink Automation will also allow Snow Finance to introduce leverage or margin into the trading platform.
+    
+    3. Deposit functionality will be expanded to deposit as much funds as he wants
+    
+    4. Deploy Snow Finance to the Polygon Mainnet
 
-     where address is the respective newly deployed contract's address
-```
-6. Call the following functions:
-```bash
-    setTradingPlatformAddress(address)
-    setSnowCoinAddress(address)
-
-    where address is the respective newly deployed contract's address
-```
-7. Deposit ChainLink tokens to the trading platform contract
-
-    You can use the following faucets: 
-    Mumbai Chainlink - 
-    Mumbai Polygon - https://mumbaifaucet.com/
 ## Authors
 
 - [@juliantheuma](https://www.github.com/juliantheuma) studying Computing and Business at University of Malta

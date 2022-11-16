@@ -150,8 +150,11 @@ Note: This might take a while, due to the Chainlink testnet oracle
 ## Use Of Moralis
 
 - Moralis streams was used to keep track of all SNOW Coin transfers in the Snow Vault Page
+
   Utilising Moralis' Listen Blockchain by Moralis Streams firebase extension, any SNOW coin transfer is stored in the firestore database at path:   moralis/events/Snowcointransfers
+  
   Front end side Code can be found in Snow-Finance/src/SnowPool
+  
   The Moralis streams Stream Id is: e46ab0d9-45ca-4a3e-bfc3-61b1159a4315
   
 - Moralis was used in cloud functions to get Snowmen NFT Metadata (Get NFTs by wallet) and getting price of Matic (Get Price)

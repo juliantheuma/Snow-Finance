@@ -147,6 +147,43 @@ This is a test credit card.
 9. Wait for the order to be processed.
 Note: This might take a while, due to the Chainlink testnet oracle
 
+## Use Of Moralis
+
+- Moralis streams was used to keep track of all SNOW Coin transfers in the Snow Vault Page
+  Utilising Moralis' Listen Blockchain by Moralis Streams firebase extension, any SNOW coin transfer is stored in the firestore database at path:   moralis/events/Snowcointransfers
+  Front end side Code can be found in Snow-Finance/src/SnowPool
+  The Moralis streams Stream Id is: e46ab0d9-45ca-4a3e-bfc3-61b1159a4315
+  
+- Moralis was used in cloud functions to get Snowmen NFT Metadata (Get NFTs by wallet) and getting price of Matic (Get Price)
+
+```bash
+GET 'https://deep-index.moralis.io/api/v2/erc20/0x7D1AfA7B718fb893dB30A3aBc0Cfc608AaCfeBB0/price'
+```
+
+```bash
+GET 'https://deep-index.moralis.io/api/v2/address/nft'
+```
+
+- Moralis Web3 UI Kit was used for multiple UI elements in the website.
+
+## Use of Polygon
+
+All smart contracts were deployed to the Polygon Mummbai network at the following addresses:
+
+Snow Coin: 0xa03d8E21CAdf0babCEc4A188297a3236B252E079 
+https://mumbai.polygonscan.com/address/0xa03d8E21CAdf0babCEc4A188297a3236B252E079
+
+Snowmen NFTs: 0xC1371A45C6c3fDA167ef1669dEafCAD5fdE1af0D
+https://mumbai.polygonscan.com/address/0xC1371A45C6c3fDA167ef1669dEafCAD5fdE1af0D
+
+Snow Vault: 0x4aA45d3422E05E722B0cE16C671672e4ff8cC4Ec
+https://mumbai.polygonscan.com/address/0x4aA45d3422E05E722B0cE16C671672e4ff8cC4Ec
+
+Trading Platform: 0xAae4347E1F8FA452152DdA9f73063a490746c16E
+https://mumbai.polygonscan.com/address/0xAae4347E1F8FA452152DdA9f73063a490746c16E
+
+
+Polygon allows Snow Finance users to have negligible gas fees and fast transactions.
 
 ## Installation
 
@@ -168,7 +205,7 @@ Note: This might take a while, due to the Chainlink testnet oracle
     npm start
 ```
 
-## Next Steps
+## Future development of Snow Finance
     
     1. Snow Finance plans to make use of Chainlink Automation to include Limit Orders, Take Profits and Stop Losses.
     
@@ -181,4 +218,9 @@ Note: This might take a while, due to the Chainlink testnet oracle
 ## Authors
 
 - [@juliantheuma](https://www.github.com/juliantheuma) studying Computing and Business at University of Malta
+
+Contacts:
+- Twitter: https://twitter.com/JulianNfts
+- LinkedIn: https://www.linkedin.com/in/julian-theuma-b065121b1/
+- email: julian.theuma@gmail.com
 

@@ -176,15 +176,22 @@ All smart contracts were deployed to the Polygon Mummbai network at the followin
 Snow Coin: 0xa03d8E21CAdf0babCEc4A188297a3236B252E079 
 https://mumbai.polygonscan.com/address/0xa03d8E21CAdf0babCEc4A188297a3236B252E079
 
+smart contract: https://mumbai.polygonscan.com/address/0xa03d8E21CAdf0babCEc4A188297a3236B252E079#code
+
 Snowmen NFTs: 0xC1371A45C6c3fDA167ef1669dEafCAD5fdE1af0D
 https://mumbai.polygonscan.com/address/0xC1371A45C6c3fDA167ef1669dEafCAD5fdE1af0D
+
+smart contract: https://firebasestorage.googleapis.com/v0/b/fundamentals-8cb60.appspot.com/o/snowman.txt?alt=media
 
 Snow Vault: 0x4aA45d3422E05E722B0cE16C671672e4ff8cC4Ec
 https://mumbai.polygonscan.com/address/0x4aA45d3422E05E722B0cE16C671672e4ff8cC4Ec
 
+smart contract: https://firebasestorage.googleapis.com/v0/b/fundamentals-8cb60.appspot.com/o/vault.txt?alt=media
+
 Trading Platform: 0xAae4347E1F8FA452152DdA9f73063a490746c16E
 https://mumbai.polygonscan.com/address/0xAae4347E1F8FA452152DdA9f73063a490746c16E
 
+smart contract: https://firebasestorage.googleapis.com/v0/b/fundamentals-8cb60.appspot.com/o/stock.txt?alt=media
 
 Polygon allows Snow Finance users to have negligible gas fees and fast transactions.
 
